@@ -196,6 +196,28 @@ services:
             - sail
         healthcheck:
             test: ["CMD", "curl", "--silent", "--fail", "http://localhost:3000/health"]
+
+    traefik:
+        image: traefik:v2.9
+        command:
+            - "--api.insecure=true"
+            - "--providers.docker=true"
+            - "--entrypoints.web.address=:80"
+            - "--entrypoints.websecure.address=:443"
+            - "--entrypoints.traefik.address=:8080" # Tambahkan entrypoint untuk dashboard
+        ports:
+            - "80:80"
+            - "443:443"
+            - "8085:8080" # Tambahkan port mapping untuk dashboard
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        networks:
+            - reverse-proxy
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.traefik.rule=Host(`traefik.${NGINX_HOST_NAME}`)" # Tambahkan label untuk mengaktifkan dashboard
+            - "traefik.http.routers.traefik.entrypoints=traefik"
+            - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 networks:
     reverse-proxy:
         name: "${NETWORK_NAME}"

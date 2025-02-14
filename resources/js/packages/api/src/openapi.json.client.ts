@@ -5,6 +5,10 @@ const ClientResource = z
     .object({
         id: z.string(),
         name: z.string(),
+        email: z.string(),
+        phone: z.string(),
+        taxNumber: z.string(),
+        address: z.string(),
         is_archived: z.boolean(),
         created_at: z.string(),
         updated_at: z.string(),
@@ -12,7 +16,16 @@ const ClientResource = z
     .passthrough();
 const ClientCollection = z.array(ClientResource);
 const ClientStoreRequest = z
-    .object({ name: z.string().min(1).max(255) })
+    .object({
+        name: z.string().min(1).max(255),
+        email: z.string().max(255).email(),
+        phone: z.string().max(20),
+        taxNumber: z.string().max(50),
+        address: z.string().max(500),
+        postal_code: z.string().max(500),
+        city: z.string().max(500),
+        country: z.string().max(500),
+    })
     .passthrough();
 const ClientUpdateRequest = z
     .object({
@@ -26,9 +39,11 @@ const ImportRequest = z
 const InvitationResource = z
     .object({ id: z.string(), email: z.string(), role: z.string() })
     .passthrough();
-const Role = z.enum(['owner', 'admin', 'manager', 'employee', 'placeholder']);
 const InvitationStoreRequest = z
-    .object({ email: z.string().email(), role: Role })
+    .object({
+        email: z.string().email(),
+        role: z.enum(['admin', 'manager', 'employee']),
+    })
     .passthrough();
 const MemberResource = z
     .object({
@@ -41,6 +56,7 @@ const MemberResource = z
         billable_rate: z.union([z.number(), z.null()]),
     })
     .passthrough();
+const Role = z.enum(['owner', 'admin', 'manager', 'employee', 'placeholder']);
 const MemberUpdateRequest = z
     .object({ role: Role, billable_rate: z.union([z.number(), z.null()]) })
     .partial()
@@ -190,13 +206,6 @@ const ReportStoreRequest = z
                 timezone: z.union([z.string(), z.null()]).optional(),
             })
             .passthrough(),
-        'properties.member_ids': z.string().optional(),
-        'properties.client_ids': z.string().optional(),
-        'properties.project_ids': z.string().optional(),
-        'properties.tag_ids': z.string().optional(),
-        'properties.task_ids': z.string().optional(),
-        'properties.week_start': z.string().optional(),
-        'properties.timezone': z.string().optional(),
     })
     .passthrough();
 const DetailedReportResource = z
@@ -459,7 +468,6 @@ const PersonalMembershipResource = z
         role: z.string(),
     })
     .passthrough();
-const PersonalMembershipCollection = z.array(PersonalMembershipResource);
 
 export const schemas = {
     ClientResource,
@@ -468,9 +476,9 @@ export const schemas = {
     ClientUpdateRequest,
     ImportRequest,
     InvitationResource,
-    Role,
     InvitationStoreRequest,
     MemberResource,
+    Role,
     MemberUpdateRequest,
     OrganizationResource,
     OrganizationUpdateRequest,
@@ -502,7 +510,6 @@ export const schemas = {
     TimeEntryUpdateRequest,
     UserResource,
     PersonalMembershipResource,
-    PersonalMembershipCollection,
 };
 
 const endpoints = makeApi([
@@ -643,9 +650,7 @@ const endpoints = makeApi([
             {
                 name: 'body',
                 type: 'Body',
-                schema: z
-                    .object({ name: z.string().min(1).max(255) })
-                    .passthrough(),
+                schema: ClientStoreRequest,
             },
             {
                 name: 'organization',
@@ -786,11 +791,6 @@ const endpoints = makeApi([
         alias: 'exportOrganization',
         requestFormat: 'json',
         parameters: [
-            {
-                name: 'body',
-                type: 'Body',
-                schema: z.object({}).partial().passthrough(),
-            },
             {
                 name: 'organization',
                 type: 'Path',
@@ -1123,11 +1123,6 @@ const endpoints = makeApi([
         requestFormat: 'json',
         parameters: [
             {
-                name: 'body',
-                type: 'Body',
-                schema: z.object({}).partial().passthrough(),
-            },
-            {
                 name: 'organization',
                 type: 'Path',
                 schema: z.string(),
@@ -1346,11 +1341,6 @@ const endpoints = makeApi([
         requestFormat: 'json',
         parameters: [
             {
-                name: 'body',
-                type: 'Body',
-                schema: z.object({}).partial().passthrough(),
-            },
-            {
                 name: 'organization',
                 type: 'Path',
                 schema: z.string(),
@@ -1397,11 +1387,6 @@ const endpoints = makeApi([
         alias: 'v1.members.make-placeholder',
         requestFormat: 'json',
         parameters: [
-            {
-                name: 'body',
-                type: 'Body',
-                schema: z.object({}).partial().passthrough(),
-            },
             {
                 name: 'organization',
                 type: 'Path',
@@ -2615,6 +2600,11 @@ Users with the permission &#x60;time-entries:view:own&#x60; can only use this en
                 schema: z.enum(['true', 'false']).optional(),
             },
             {
+                name: 'user_id',
+                type: 'Query',
+                schema: z.string().optional(),
+            },
+            {
                 name: 'member_ids',
                 type: 'Query',
                 schema: z.array(z.string()).min(1).optional(),
@@ -2638,11 +2628,6 @@ Users with the permission &#x60;time-entries:view:own&#x60; can only use this en
                 name: 'task_ids',
                 type: 'Query',
                 schema: z.array(z.string()).min(1).optional(),
-            },
-            {
-                name: 'user_id',
-                type: 'Query',
-                schema: z.string().optional(),
             },
         ],
         response: z
@@ -3445,7 +3430,7 @@ The report is considered public if the &#x60;is_public&#x60; field is set to &#x
         description: `This endpoint is independent of organization.`,
         requestFormat: 'json',
         response: z
-            .object({ data: PersonalMembershipCollection })
+            .object({ data: z.array(PersonalMembershipResource) })
             .passthrough(),
         errors: [
             {
