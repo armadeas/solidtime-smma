@@ -34,6 +34,42 @@ class ClientStoreRequest extends FormRequest
                     return $builder->whereBelongsTo($this->organization, 'organization');
                 })->withCustomTranslation('validation.client_name_already_exists'),
             ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+            ],
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+            ],
+            'taxNumber' => [
+                'required',
+                'string',
+                'max:50',
+            ],
+            'address' => [
+                'required',
+                'string',
+                'max:500',
+            ],
+            'postal_code' => [
+                'required',
+                'string',
+                'max:500',
+            ],
+            'city' => [
+                'required',
+                'string',
+                'max:500',
+            ],
+            'country' => [
+                'required',
+                'string',
+                'max:500',
+            ],
         ];
     }
 }

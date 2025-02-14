@@ -68,6 +68,13 @@ class ClientController extends Controller
 
         $client = new Client;
         $client->name = $request->input('name');
+        $client->email = $request->input('email');
+        $client->phone = $request->input('phone');
+        $client->taxNumber = $request->input('taxNumber');
+        $client->address = $request->input('address');
+        $client->postal_code = $request->input('postal_code');
+        $client->city = $request->input('city');
+        $client->country = $request->input('country');
         $client->organization()->associate($organization);
         $client->save();
 

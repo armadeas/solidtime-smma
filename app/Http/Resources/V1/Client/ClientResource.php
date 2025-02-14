@@ -25,6 +25,14 @@ class ClientResource extends BaseResource
             'id' => $this->resource->id,
             /** @var string $name Name */
             'name' => $this->resource->name,
+            /** @var string $email Email */
+            'email' => $this->resource->email,
+            /** @var string $phone Phone */
+            'phone' => $this->resource->phone,
+            /** @var string $taxNumber Tax Number */
+            'taxNumber' => $this->resource->taxNumber,
+            /** @var string $address Address */
+            'address' => $this->resource->address,
             /** @var bool $is_archived Whether the client is archived */
             'is_archived' => $this->resource->is_archived,
             /** @var string $created_at When the tag was created */
