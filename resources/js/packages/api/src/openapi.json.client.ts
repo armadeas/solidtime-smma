@@ -1,6 +1,21 @@
 import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
 import { z } from 'zod';
 
+const ApiTokenResource = z
+    .object({
+        id: z.string(),
+        name: z.string(),
+        revoked: z.string(),
+        scopes: z.string(),
+        created_at: z.union([z.string(), z.null()]),
+        expires_at: z.union([z.string(), z.null()]),
+    })
+    .passthrough();
+const ApiTokenCollection = z.array(ApiTokenResource);
+const ApiTokenStoreRequest = z
+    .object({ name: z.string().min(1).max(255) })
+    .passthrough();
+const ApiTokenWithAccessTokenResource = z.string();
 const ClientResource = z
     .object({
         id: z.string(),
@@ -470,6 +485,10 @@ const PersonalMembershipResource = z
     .passthrough();
 
 export const schemas = {
+    ApiTokenResource,
+    ApiTokenCollection,
+    ApiTokenStoreRequest,
+    ApiTokenWithAccessTokenResource,
     ClientResource,
     ClientCollection,
     ClientStoreRequest,
@@ -3410,6 +3429,120 @@ The report is considered public if the &#x60;is_public&#x60; field is set to &#x
         description: `This endpoint is independent of organization.`,
         requestFormat: 'json',
         response: z.object({ data: UserResource }).passthrough(),
+        errors: [
+            {
+                status: 401,
+                description: `Unauthenticated`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 403,
+                description: `Authorization error`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+        ],
+    },
+    {
+        method: 'get',
+        path: '/v1/users/me/api-tokens',
+        alias: 'getApiTokens',
+        description: `This endpoint is independent of organization.`,
+        requestFormat: 'json',
+        response: z.object({ data: ApiTokenCollection }).passthrough(),
+        errors: [
+            {
+                status: 401,
+                description: `Unauthenticated`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 403,
+                description: `Authorization error`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+        ],
+    },
+    {
+        method: 'post',
+        path: '/v1/users/me/api-tokens',
+        alias: 'createApiToken',
+        description: `The response will contain the access token that can be used to send authenticated API requests.
+Please note that the access token is only shown in this response and cannot be retrieved later.`,
+        requestFormat: 'json',
+        parameters: [
+            {
+                name: 'body',
+                type: 'Body',
+                schema: z
+                    .object({ name: z.string().min(1).max(255) })
+                    .passthrough(),
+            },
+        ],
+        response: z
+            .object({ data: ApiTokenWithAccessTokenResource })
+            .passthrough(),
+        errors: [
+            {
+                status: 401,
+                description: `Unauthenticated`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 403,
+                description: `Authorization error`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 422,
+                description: `Validation error`,
+                schema: z
+                    .object({
+                        message: z.string(),
+                        errors: z.record(z.array(z.string())),
+                    })
+                    .passthrough(),
+            },
+        ],
+    },
+    {
+        method: 'delete',
+        path: '/v1/users/me/api-tokens/:apiTokenId',
+        alias: 'deleteApiToken',
+        requestFormat: 'json',
+        parameters: [
+            {
+                name: 'apiTokenId',
+                type: 'Path',
+                schema: z.string(),
+            },
+        ],
+        response: z.null(),
+        errors: [
+            {
+                status: 401,
+                description: `Unauthenticated`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 403,
+                description: `Authorization error`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+        ],
+    },
+    {
+        method: 'post',
+        path: '/v1/users/me/api-tokens/:apiTokenId/revoke',
+        alias: 'revokeApiToken',
+        requestFormat: 'json',
+        parameters: [
+            {
+                name: 'apiTokenId',
+                type: 'Path',
+                schema: z.string(),
+            },
+        ],
+        response: z.null(),
         errors: [
             {
                 status: 401,
