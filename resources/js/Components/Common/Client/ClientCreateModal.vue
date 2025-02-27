@@ -20,7 +20,7 @@ const client = ref<CreateClientBody>({
     phone: '', // Add phone field
     taxNumber: '', // Add taxNumber field
     address: '', // Add address field
-    postalCOde: '', //Add postalCode field
+    postal_code: '', //Add postalCode field
     city: '', // Add city field
     country: '', // Add country field
 });
@@ -159,6 +159,7 @@ useFocus(clientNameInput, { initialValue: true });
                         id="clientAddress"
                         ref="clientAddressInput"
                         v-model="client.address"
+                        type="text"
                         placeholder="Client Address"
                         required
                         autocomplete="clientAddress"

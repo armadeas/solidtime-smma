@@ -5,9 +5,9 @@ const ApiTokenResource = z
     .object({
         id: z.string(),
         name: z.string(),
-        revoked: z.string(),
-        scopes: z.string(),
-        created_at: z.union([z.string(), z.null()]),
+        revoked: z.boolean(),
+        scopes: z.array(z.string()),
+        created_at: z.string(),
         expires_at: z.union([z.string(), z.null()]),
     })
     .passthrough();
@@ -15,7 +15,17 @@ const ApiTokenCollection = z.array(ApiTokenResource);
 const ApiTokenStoreRequest = z
     .object({ name: z.string().min(1).max(255) })
     .passthrough();
-const ApiTokenWithAccessTokenResource = z.string();
+const ApiTokenWithAccessTokenResource = z
+    .object({
+        id: z.string(),
+        name: z.string(),
+        revoked: z.boolean(),
+        scopes: z.array(z.string()),
+        created_at: z.string(),
+        expires_at: z.union([z.string(), z.null()]),
+        access_token: z.string(),
+    })
+    .passthrough();
 const ClientResource = z
     .object({
         id: z.string(),
@@ -24,6 +34,9 @@ const ClientResource = z
         phone: z.string(),
         taxNumber: z.string(),
         address: z.string(),
+        postal_code: z.string(),
+        city: z.string(),
+        country: z.string(),
         is_archived: z.boolean(),
         created_at: z.string(),
         updated_at: z.string(),
@@ -46,6 +59,13 @@ const ClientUpdateRequest = z
     .object({
         name: z.string().min(1).max(255),
         is_archived: z.boolean().optional(),
+        email: z.string().max(255).email(),
+        phone: z.string().max(20),
+        taxNumber: z.string().max(50),
+        address: z.string().max(500),
+        postal_code: z.string().max(500),
+        city: z.string().max(500),
+        country: z.string().max(500),
     })
     .passthrough();
 const ImportRequest = z
@@ -3483,6 +3503,17 @@ Please note that the access token is only shown in this response and cannot be r
             .passthrough(),
         errors: [
             {
+                status: 400,
+                description: `API exception`,
+                schema: z
+                    .object({
+                        error: z.boolean(),
+                        key: z.string(),
+                        message: z.string(),
+                    })
+                    .passthrough(),
+            },
+            {
                 status: 401,
                 description: `Unauthenticated`,
                 schema: z.object({ message: z.string() }).passthrough(),
@@ -3506,18 +3537,29 @@ Please note that the access token is only shown in this response and cannot be r
     },
     {
         method: 'delete',
-        path: '/v1/users/me/api-tokens/:apiTokenId',
+        path: '/v1/users/me/api-tokens/:apiToken',
         alias: 'deleteApiToken',
         requestFormat: 'json',
         parameters: [
             {
-                name: 'apiTokenId',
+                name: 'apiToken',
                 type: 'Path',
                 schema: z.string(),
             },
         ],
         response: z.null(),
         errors: [
+            {
+                status: 400,
+                description: `API exception`,
+                schema: z
+                    .object({
+                        error: z.boolean(),
+                        key: z.string(),
+                        message: z.string(),
+                    })
+                    .passthrough(),
+            },
             {
                 status: 401,
                 description: `Unauthenticated`,
@@ -3526,24 +3568,40 @@ Please note that the access token is only shown in this response and cannot be r
             {
                 status: 403,
                 description: `Authorization error`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 404,
+                description: `Not found`,
                 schema: z.object({ message: z.string() }).passthrough(),
             },
         ],
     },
     {
         method: 'post',
-        path: '/v1/users/me/api-tokens/:apiTokenId/revoke',
+        path: '/v1/users/me/api-tokens/:apiToken/revoke',
         alias: 'revokeApiToken',
         requestFormat: 'json',
         parameters: [
             {
-                name: 'apiTokenId',
+                name: 'apiToken',
                 type: 'Path',
                 schema: z.string(),
             },
         ],
         response: z.null(),
         errors: [
+            {
+                status: 400,
+                description: `API exception`,
+                schema: z
+                    .object({
+                        error: z.boolean(),
+                        key: z.string(),
+                        message: z.string(),
+                    })
+                    .passthrough(),
+            },
             {
                 status: 401,
                 description: `Unauthenticated`,
@@ -3552,6 +3610,11 @@ Please note that the access token is only shown in this response and cannot be r
             {
                 status: 403,
                 description: `Authorization error`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 404,
+                description: `Not found`,
                 schema: z.object({ message: z.string() }).passthrough(),
             },
         ],

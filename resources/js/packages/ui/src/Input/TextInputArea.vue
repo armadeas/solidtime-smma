@@ -1,21 +1,26 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { twMerge } from 'tailwind-merge';
 
 const props = defineProps<{
     name?: string;
     class?: string;
+    modelValue?: string | number | readonly string[] | null | undefined;
 }>();
 
-const input = ref<HTMLTextAreaElement | null>(null);
+const emit = defineEmits(['update:modelValue']);
 
-// Define the type of the model variable
-const model = ref<string | number | readonly string[] | null | undefined>(null);
+const input = ref<HTMLTextAreaElement | null>(null);
+const model = ref(props.modelValue);
 
 onMounted(() => {
     if (input.value?.hasAttribute('autofocus')) {
         input.value?.focus();
     }
+});
+
+watch(model, (newValue) => {
+    emit('update:modelValue', newValue);
 });
 
 defineExpose({ focus: () => input.value?.focus() });

@@ -33,6 +33,12 @@ class ClientResource extends BaseResource
             'taxNumber' => $this->resource->taxNumber,
             /** @var string $address Address */
             'address' => $this->resource->address,
+            /** @var string $postal_code Postal Code */
+            'postal_code' => $this->resource->postal_code,
+            /** @var string $city City */
+            'city' => $this->resource->city,
+            /** @var string $country Country */
+            'country' => $this->resource->country,
             /** @var bool $is_archived Whether the client is archived */
             'is_archived' => $this->resource->is_archived,
             /** @var string $created_at When the tag was created */

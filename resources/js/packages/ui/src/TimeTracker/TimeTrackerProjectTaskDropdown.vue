@@ -143,6 +143,13 @@ function addProjectToFilterObject(
                 updated_at: '',
                 value: '',
                 is_archived: false,
+                address: '',
+                email: '',
+                phone: '',
+                taxNumber: '',
+                postal_code: '',
+                city: '',
+                country: '',
                 projects: [
                     {
                         ...project,
@@ -167,6 +174,13 @@ watchEffect(() => {
             updated_at: '',
             value: '',
             is_archived: false,
+            address: '',
+            email: '',
+            phone: '',
+            taxNumber: '',
+            postal_code: '',
+            city: '',
+            country: '',
             projects: [
                 {
                     id: '',

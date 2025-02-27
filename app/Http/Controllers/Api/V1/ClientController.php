@@ -93,6 +93,13 @@ class ClientController extends Controller
         $this->checkPermission($organization, 'clients:update', $client);
 
         $client->name = $request->input('name');
+        $client->email = $request->input('email');
+        $client->phone = $request->input('phone');
+        $client->taxNumber = $request->input('taxNumber');
+        $client->address = $request->input('address');
+        $client->postal_code = $request->input('postal_code');
+        $client->city = $request->input('city');
+        $client->country = $request->input('country');
         if ($request->has('is_archived')) {
             $client->archived_at = $request->getIsArchived() ? Carbon::now() : null;
         }

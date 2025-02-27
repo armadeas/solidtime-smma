@@ -44,6 +44,13 @@ async function addClientIfNoneExists() {
     if (searchValue.value.length > 0 && filteredClients.value.length === 0) {
         const newClient = await props.createClient({
             name: searchValue.value,
+            email: '', // Tambahkan email
+            phone: '', // Tambahkan phone
+            taxNumber: '', // Tambahkan taxNumber
+            address: '', // Tambahkan address
+            postal_code: '', // Tambahkan postal_code
+            city: '', // Tambahkan city
+            country: '', // Tambahkan country
         });
         if (newClient) {
             model.value = newClient.id;
