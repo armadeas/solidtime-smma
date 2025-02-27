@@ -45,7 +45,6 @@ async function createApiToken(){
         (response) => {
             createApiTokenForm.name = '';
             displayingToken.value = true;
-            // @ts-expect-error temporary fix until openapi docs type is fixed
             newToken.value = response.data.access_token;
         }
     );
@@ -77,7 +76,7 @@ async function deleteApiToken () {
             }
         );
     }
-};
+}
 
 async function revokeApiToken () {
     if(apiTokenBeingRevoked.value){
@@ -91,14 +90,14 @@ async function revokeApiToken () {
             }
         );
     }
-};
+}
 
 
 const { data: sharedReportResponseData } = useQuery({
     queryKey: ['api-tokens'],
     queryFn: () =>
         api.getApiTokens(),
-});
+})
 
 const tokens = computed(() => {
     return sharedReportResponseData.value?.data ?? [];

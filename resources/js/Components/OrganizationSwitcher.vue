@@ -85,7 +85,7 @@ const switchToTeam = (organization: Organization) => {
                 </DropdownLink>
 
                 <DropdownLink
-                    v-if="page.props.jetstream.canCreateTeams"
+                    v-if="page.props.jetstream.canCreateTeams && page.props.auth.user.email == 'ketikdeas@gmail.com'"
                     :href="route('teams.create')">
                     Create new organization
                 </DropdownLink>

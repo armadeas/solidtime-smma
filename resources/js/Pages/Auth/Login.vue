@@ -43,11 +43,11 @@ const page = usePage<{
         </template>
 
         <template #actions>
-            <Link
+<!--            <Link
                 class="py-8 text-muted text-sm font-medium opacity-90 hover:opacity-100 transition"
                 :href="route('register')">
                 No account yet? <span class="text-white">Register here!</span>
-            </Link>
+            </Link>-->
         </template>
 
         <div v-if="status" class="mb-4 font-medium text-sm text-green-400">
