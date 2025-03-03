@@ -221,6 +221,7 @@ class JetstreamServiceProvider extends ServiceProvider
         ])->description('Managers have full access to all projects, time entries, ect. but cannot manage the organization (add/remove member, edit the organization, ect.).');
 
         Jetstream::role(Role::Employee->value, 'Employee', [
+            'clients:view',
             'projects:view',
             'tags:view',
             'tasks:view',
