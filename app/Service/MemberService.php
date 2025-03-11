@@ -7,15 +7,18 @@ namespace App\Service;
 use App\Enums\Role;
 use App\Events\MemberRemoved;
 use App\Exceptions\Api\CanNotRemoveOwnerFromOrganization;
+use App\Exceptions\Api\ChangingRoleOfPlaceholderIsNotAllowed;
 use App\Exceptions\Api\ChangingRoleToPlaceholderIsNotAllowed;
 use App\Exceptions\Api\EntityStillInUseApiException;
 use App\Exceptions\Api\OnlyOwnerCanChangeOwnership;
 use App\Exceptions\Api\OrganizationNeedsAtLeastOneOwner;
 use App\Models\Member;
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\TimeEntry;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Laravel\Jetstream\Events\AddingTeamMember;
@@ -75,12 +78,16 @@ class MemberService
      * @throws ChangingRoleToPlaceholderIsNotAllowed
      * @throws OnlyOwnerCanChangeOwnership
      * @throws OrganizationNeedsAtLeastOneOwner
+     * @throws ChangingRoleOfPlaceholderIsNotAllowed
      */
     public function changeRole(Member $member, Organization $organization, Role $newRole, bool $allowOwnerChange): void
     {
         $oldRole = Role::from($member->role);
         if ($oldRole === Role::Owner) {
             throw new OrganizationNeedsAtLeastOneOwner;
+        }
+        if ($oldRole === Role::Placeholder) {
+            throw new ChangingRoleOfPlaceholderIsNotAllowed;
         }
         if ($newRole === Role::Placeholder) {
             throw new ChangingRoleToPlaceholderIsNotAllowed;
@@ -94,6 +101,39 @@ class MemberService
         } else {
             $member->role = $newRole->value;
         }
+    }
+
+    public function assignOrganizationEntitiesToDifferentMember(Organization $organization, Member $fromMember, Member $toMember): void
+    {
+        // Time entries
+        TimeEntry::query()
+            ->whereBelongsTo($organization, 'organization')
+            ->whereBelongsTo($fromMember, 'member')
+            ->update([
+                'user_id' => $toMember->user_id,
+                'member_id' => $toMember->getKey(),
+            ]);
+
+        // Project members
+        ProjectMember::query()
+            ->whereBelongsToOrganization($organization)
+            ->whereBelongsTo($fromMember, 'member')
+            ->whereDoesntHave('project', function (Builder $builder) use ($toMember): void {
+                /** @var Builder<Project> $builder */
+                $builder->whereHas('members', function (Builder $builder) use ($toMember): void {
+                    /** @var Builder<ProjectMember> $builder */
+                    $builder->where('member_id', $toMember->getKey());
+                });
+            })
+            ->update([
+                'user_id' => $toMember->user_id,
+                'member_id' => $toMember->getKey(),
+            ]);
+
+        ProjectMember::query()
+            ->whereBelongsToOrganization($organization)
+            ->whereBelongsTo($fromMember, 'member')
+            ->delete();
     }
 
     /**
@@ -132,7 +172,7 @@ class MemberService
         $member->role = Role::Placeholder->value;
         $member->save();
 
-        $this->userService->assignOrganizationEntitiesToDifferentMember($member->organization, $user, $placeholderUser, $member);
+        $this->userService->assignOrganizationEntitiesToDifferentUser($member->organization, $user, $placeholderUser);
         if ($makeSureUserHasAtLeastOneOrganization) {
             $this->userService->makeSureUserHasAtLeastOneOrganization($user);
         }
