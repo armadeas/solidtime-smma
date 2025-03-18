@@ -140,6 +140,8 @@ services:
         networks:
             - reverse-proxy
             - sail
+        ports:
+            - 9000:9000
         command: minio server /data/minio --console-address ":8900"
         healthcheck:
             test: [ "CMD", "mc", "ready", "local" ]
