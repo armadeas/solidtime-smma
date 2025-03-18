@@ -116,7 +116,7 @@ const deleteApiTokenMutation = useMutation({
     mutationFn: async (apiTokenId: string) => {
         return await api.deleteApiToken(undefined, {
             params: {
-                apiTokenId: apiTokenId,
+                apiToken: apiTokenId,
             },
         });
     },
@@ -129,7 +129,7 @@ const revokeApiTokenMutation = useMutation({
     mutationFn: async (apiTokenId: string) => {
         return await api.revokeApiToken(undefined, {
             params: {
-                apiTokenId: apiTokenId,
+                apiToken: apiTokenId,
             },
         });
     },

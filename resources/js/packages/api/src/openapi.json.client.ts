@@ -96,6 +96,10 @@ const MemberUpdateRequest = z
     .object({ role: Role, billable_rate: z.union([z.number(), z.null()]) })
     .partial()
     .passthrough();
+const MemberMergeIntoRequest = z
+    .object({ member_id: z.string() })
+    .partial()
+    .passthrough();
 const OrganizationResource = z
     .object({
         id: z.string(),
@@ -519,6 +523,7 @@ export const schemas = {
     MemberResource,
     Role,
     MemberUpdateRequest,
+    MemberMergeIntoRequest,
     OrganizationResource,
     OrganizationUpdateRequest,
     ProjectResource,
@@ -1192,6 +1197,71 @@ const endpoints = makeApi([
         ],
     },
     {
+        method: 'post',
+        path: '/v1/organizations/:organization/member/:member/merge-into',
+        alias: 'mergeMember',
+        requestFormat: 'json',
+        parameters: [
+            {
+                name: 'body',
+                type: 'Body',
+                schema: z
+                    .object({ member_id: z.string() })
+                    .partial()
+                    .passthrough(),
+            },
+            {
+                name: 'organization',
+                type: 'Path',
+                schema: z.string(),
+            },
+            {
+                name: 'member',
+                type: 'Path',
+                schema: z.string(),
+            },
+        ],
+        response: z.null(),
+        errors: [
+            {
+                status: 400,
+                description: `API exception`,
+                schema: z
+                    .object({
+                        error: z.boolean(),
+                        key: z.string(),
+                        message: z.string(),
+                    })
+                    .passthrough(),
+            },
+            {
+                status: 401,
+                description: `Unauthenticated`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 403,
+                description: `Authorization error`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 404,
+                description: `Not found`,
+                schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 422,
+                description: `Validation error`,
+                schema: z
+                    .object({
+                        message: z.string(),
+                        errors: z.record(z.array(z.string())),
+                    })
+                    .passthrough(),
+            },
+        ],
+    },
+    {
         method: 'get',
         path: '/v1/organizations/:organization/members',
         alias: 'getMembers',
@@ -1423,7 +1493,7 @@ const endpoints = makeApi([
     {
         method: 'post',
         path: '/v1/organizations/:organization/members/:member/make-placeholder',
-        alias: 'v1.members.make-placeholder',
+        alias: 'makePlaceholder',
         requestFormat: 'json',
         parameters: [
             {
@@ -3076,7 +3146,7 @@ If the group parameters are all set to &#x60;null&#x60; or are all missing, the 
                                     .object({
                                         key: z.union([z.string(), z.null()]),
                                         seconds: z.number().int(),
-                                        cost: z.number().int(),
+                                        cost: z.union([z.number(), z.null()]),
                                         grouped_type: z.union([
                                             z.string(),
                                             z.null(),
@@ -3092,7 +3162,10 @@ If the group parameters are all set to &#x60;null&#x60; or are all missing, the 
                                                         seconds: z
                                                             .number()
                                                             .int(),
-                                                        cost: z.number().int(),
+                                                        cost: z.union([
+                                                            z.number(),
+                                                            z.null(),
+                                                        ]),
                                                         grouped_type: z.null(),
                                                         grouped_data: z.null(),
                                                     })
@@ -3106,7 +3179,7 @@ If the group parameters are all set to &#x60;null&#x60; or are all missing, the 
                             z.null(),
                         ]),
                         seconds: z.number().int(),
-                        cost: z.number().int(),
+                        cost: z.union([z.number(), z.null()]),
                     })
                     .passthrough(),
             })

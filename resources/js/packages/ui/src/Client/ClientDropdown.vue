@@ -4,6 +4,7 @@ import Dropdown from '@/packages/ui/src/Input/Dropdown.vue';
 import { type Component, computed, nextTick, ref, watch } from 'vue';
 import ClientDropdownItem from '@/packages/ui/src/Client/ClientDropdownItem.vue';
 import type { CreateClientBody, Client } from '@/packages/api/src';
+import { UseFocusTrap } from '@vueuse/integrations/useFocusTrap/component';
 
 const model = defineModel<string | null>({
     default: null,
@@ -134,11 +135,14 @@ const highlightedItem = computed(() => {
 </script>
 
 <template>
-    <Dropdown v-model="open" width="120" :close-on-content-click="true">
+    <Dropdown v-model="open" width="150" :close-on-content-click="true">
         <template #trigger>
             <slot name="trigger"></slot>
         </template>
         <template #content>
+            <UseFocusTrap
+                v-if="open"
+                :options="{ immediate: true, allowOutsideClick: true }">
             <input
                 ref="searchInput"
                 :value="searchValue"
@@ -181,6 +185,7 @@ const highlightedItem = computed(() => {
                         @click="updateClient(client.id)"></ClientDropdownItem>
                 </div>
             </div>
+            </UseFocusTrap>
         </template>
     </Dropdown>
 </template>
