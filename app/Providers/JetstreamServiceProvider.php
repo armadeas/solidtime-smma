@@ -80,6 +80,8 @@ class JetstreamServiceProvider extends ServiceProvider
         Jetstream::defaultApiTokenPermissions([]);
 
         Jetstream::role(Role::Owner->value, 'Owner', [
+            'charts:view:own',
+            'charts:view:all',
             'projects:view',
             'projects:view:all',
             'projects:create',
@@ -134,6 +136,8 @@ class JetstreamServiceProvider extends ServiceProvider
         ])->description('Owner users can perform any action. There is only one owner per organization.');
 
         Jetstream::role(Role::Admin->value, 'Administrator', [
+            'charts:view:own',
+            'charts:view:all',
             'projects:view',
             'projects:view:all',
             'projects:create',
@@ -184,6 +188,8 @@ class JetstreamServiceProvider extends ServiceProvider
         ])->description('Administrator users can perform any action, except accessing the billing dashboard.');
 
         Jetstream::role(Role::Manager->value, 'Manager', [
+            'charts:view:own',
+            'charts:view:all',
             'projects:view',
             'projects:view:all',
             'projects:create',
@@ -225,6 +231,7 @@ class JetstreamServiceProvider extends ServiceProvider
 
         Jetstream::role(Role::Employee->value, 'Employee', [
             'clients:view',
+            'charts:view:own',
             'projects:view',
             'tags:view',
             'tasks:view',
