@@ -94,7 +94,7 @@ const { floatingStyles } = useFloating(reference, floating, {
 
 <template>
     <div class="min-w-0 isolate">
-        <div ref="reference" class="min-w-0" @click.prevent="toggleOpen">
+        <div ref="reference" class="min-w-0 flex items-center" @click.prevent="toggleOpen">
             <slot name="trigger" />
         </div>
 
@@ -118,7 +118,7 @@ const { floatingStyles } = useFloating(reference, floating, {
                     :style="floatingStyles"
                     @click="onContentClick">
                     <div
-                        class="rounded-lg ring-1 relative ring-black ring-opacity-5 border border-card-border overflow-none shadow-dropdown bg-card-background">
+                        class="rounded-lg overflow-hidden relative border border-card-border overflow-none shadow-dropdown bg-card-background">
                         <slot name="content" />
                     </div>
                 </div>
