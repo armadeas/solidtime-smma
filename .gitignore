@@ -44,3 +44,5 @@ yarn-error.log
 /config/composer
 
 storage/debugbar/
+
+traefik/acme.json
