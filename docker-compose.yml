@@ -19,7 +19,8 @@ services:
             - "traefik.http.routers.solidtime-dev-https.service=solidtime-dev"
             - "traefik.http.routers.solidtime-dev-https.entrypoints=websecure"
             - "traefik.http.routers.solidtime-dev-https.tls.certresolver=letsencrypt"
-            - "traefik.http.routers.solidtime-dev-https.tls=${APP_ENV:-development} == 'production'"
+            - "traefik.http.routers.solidtime-dev-https.tls=true"
+            #- "traefik.http.routers.solidtime-dev-https.tls=${APP_ENV:-development} == 'production'"
             # vite
             - "traefik.http.services.solidtime-dev-vite.loadbalancer.server.port=5173"
             # http
@@ -45,6 +46,7 @@ services:
             - reverse-proxy
         depends_on:
             - pgsql
+        restart: always
     pgsql:
         image: 'postgres:15'
         ports:
@@ -70,6 +72,7 @@ services:
                 - '${DB_USERNAME}'
             retries: 3
             timeout: 5s
+        restart: always
     pgsql_test:
         image: 'postgres:15'
         environment:
@@ -105,10 +108,12 @@ services:
             - "traefik.http.routers.solidtime-dev-mailpit-https.rule=Host(`mail.${NGINX_HOST_NAME}`)"
             - "traefik.http.routers.solidtime-dev-mailpit-https.service=solidtime-dev-mailpit"
             - "traefik.http.routers.solidtime-dev-mailpit-https.entrypoints=websecure"
+            - "traefik.http.routers.solidtime-dev-mailpit-https.tls.certresolver=letsencrypt"
             - "traefik.http.routers.solidtime-dev-mailpit-https.tls=true"
         networks:
             - sail
             - reverse-proxy
+        restart: always
     playwright:
         image: mcr.microsoft.com/playwright:v1.50.0-jammy
         command: ['npx', 'playwright', 'test', '--ui-port=8080', '--ui-host=0.0.0.0']
@@ -124,12 +129,14 @@ services:
             - "traefik.http.routers.solidtime-dev-playwright.entrypoints=web"
             - "traefik.http.routers.solidtime-dev-playwright-https.rule=Host(`playwright.${NGINX_HOST_NAME}`)"
             - "traefik.http.routers.solidtime-dev-playwright-https.entrypoints=websecure"
+            - "traefik.http.routers.solidtime-dev-playwright-https.tls.certresolver=letsencrypt"
             - "traefik.http.routers.solidtime-dev-playwright-https.tls=true"
         networks:
             - sail
             - reverse-proxy
         volumes:
             - '.:/src'
+        restart: always
     minio:
         image: 'minio/minio:latest'
         environment:
@@ -149,6 +156,7 @@ services:
             interval: 5s
             timeout: 5s
             retries: 5
+        restart: always
         labels:
             - "traefik.enable=true"
             - "traefik.docker.network=${NETWORK_NAME}"
@@ -162,6 +170,8 @@ services:
             - "traefik.http.routers.solidtime-dev-storage-frontend-https.rule=Host(`storage.${NGINX_HOST_NAME}`)"
             - "traefik.http.routers.solidtime-dev-storage-frontend-https.service=solidtime-dev-storage-frontend"
             - "traefik.http.routers.solidtime-dev-storage-frontend-https.entrypoints=websecure"
+            - "traefik.http.routers.solidtime-dev-storage-frontend-https.tls.certresolver=letsencrypt"
+
             - "traefik.http.routers.solidtime-dev-storage-frontend-https.tls=true"
             # Storage Management
             - "traefik.http.services.solidtime-dev-storage-management.loadbalancer.server.port=8900"
@@ -173,6 +183,7 @@ services:
             - "traefik.http.routers.solidtime-dev-storage-management-https.rule=Host(`storage-management.${NGINX_HOST_NAME}`)"
             - "traefik.http.routers.solidtime-dev-storage-management-https.service=solidtime-dev-storage-management"
             - "traefik.http.routers.solidtime-dev-storage-management-https.entrypoints=websecure"
+            - "traefik.http.routers.solidtime-dev-storage-management-https.tls.certresolver=letsencrypt"
             - "traefik.http.routers.solidtime-dev-storage-management-https.tls=true"
 
     minio-create-bucket:
@@ -199,6 +210,7 @@ services:
             - sail
         healthcheck:
             test: ["CMD", "curl", "--silent", "--fail", "http://localhost:3000/health"]
+        restart: always
 
     traefik:
         image: traefik:v2.9
@@ -211,6 +223,9 @@ services:
             - "--certificatesresolvers.letsencrypt.acme.email=${CLOUDFLARE_EMAIL}"
             - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
             - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare"
+            - "--certificatesresolvers.letsencrypt.acme.dnschallenge.delaybeforecheck=60"
+            - "--certificatesresolvers.letsencrypt.acme.dnschallenge.resolvers=1.1.1.1,8.8.8.8"
+            - "--log.level=DEBUG"
         ports:
             - "80:80"
             - "443:443"
@@ -228,6 +243,7 @@ services:
             - "traefik.http.routers.traefik.rule=Host(`traefik.${NGINX_HOST_NAME}`)" # Tambahkan label untuk mengaktifkan dashboard
             - "traefik.http.routers.traefik.entrypoints=traefik"
             - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+        restart: always
 networks:
     reverse-proxy:
         name: "${NETWORK_NAME}"
