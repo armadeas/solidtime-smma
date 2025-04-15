@@ -32,7 +32,7 @@ defineExpose({ focus: () => input.value?.focus() });
         v-model="model"
         :class="
             twMerge(
-                'border-input-border border bg-input-background text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent rounded-md shadow-sm',
+                'border-input-border border bg-input-background text-text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent rounded-md shadow-sm',
                 props.class
             )
         "
