@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ExportFormat;
 use App\Enums\Role;
+use App\Enums\TimeEntryAggregationType;
 use App\Exceptions\Api\FeatureIsNotAvailableInFreePlanApiException;
 use App\Exceptions\Api\PdfRendererIsNotConfiguredException;
 use App\Exceptions\Api\TimeEntryCanNotBeRestartedApiException;
@@ -29,6 +30,7 @@ use App\Models\Task;
 use App\Models\TimeEntry;
 use App\Service\ReportExport\TimeEntriesDetailedCsvExport;
 use App\Service\ReportExport\TimeEntriesDetailedExport;
+use App\Service\ReportExport\TimeEntriesInvoiceExport;
 use App\Service\ReportExport\TimeEntriesReportExport;
 use App\Service\TimeEntryAggregationService;
 use App\Service\TimeEntryFilter;
@@ -159,6 +161,40 @@ class TimeEntryController extends Controller
     }
 
     /**
+     * @return Builder<TimeEntryInvoice>
+     */
+    private function getTimeEntriesInvoiceGroupQuery(Organization $organization, TimeEntryIndexRequest|TimeEntryIndexExportRequest $request, ?Member $member, TimeEntryAggregationService $timeEntryAggregationService): Builder
+    {
+        $user = $this->user();
+        $Grouping = [
+            $timeEntryAggregationService->getGroupByQuery(TimeEntryAggregationType::Day, $user->timezone, $user->week_start),
+            $timeEntryAggregationService->getGroupByQuery(TimeEntryAggregationType::User, $user->timezone, $user->week_start),
+            $timeEntryAggregationService->getGroupByQuery(TimeEntryAggregationType::Description, $user->timezone, $user->week_start),
+            ];
+
+        $timeEntriesQuery = TimeEntry::query()
+//            ->select($Grouping)
+            ->selectRaw($Grouping[0] . 'as group_day, user_id, description, task_id, project_id, client_id, tags, billable_rate, round(sum(extract(epoch from (coalesce("end", now()) - start)))) as totalHours')
+            ->groupBy('group_day', 'user_id', 'description', 'task_id', 'project_id', 'client_id', 'tags', 'billable_rate')
+            ->whereBelongsTo($organization, 'organization')
+            ->orderBy('group_day', 'desc');
+
+        $filter = new TimeEntryFilter($timeEntriesQuery);
+        $filter->addStartFilter($request->input('start'));
+        $filter->addEndFilter($request->input('end'));
+        $filter->addActiveFilter($request->input('active'));
+        $filter->addMemberIdFilter($member);
+        $filter->addMemberIdsFilter($request->input('member_ids'));
+        $filter->addProjectIdsFilter($request->input('project_ids'));
+        $filter->addTagIdsFilter($request->input('tag_ids'));
+        $filter->addTaskIdsFilter($request->input('task_ids'));
+        $filter->addClientIdsFilter($request->input('client_ids'));
+        $filter->addBillableFilter($request->input('billable'));
+
+        return $filter->get();
+    }
+
+    /**
      * Export time entries in organization
      *
      * @throws AuthorizationException|PdfRendererIsNotConfiguredException|FeatureIsNotAvailableInFreePlanApiException
@@ -183,7 +219,11 @@ class TimeEntryController extends Controller
         $timezone = $user->timezone;
         $showBillableRate = $this->member($organization)->role !== Role::Employee->value || $organization->employees_can_see_billable_rates;
 
-        $timeEntriesQuery = $this->getTimeEntriesQuery($organization, $request, $member);
+        if ($request->template === 'invoice') {
+            $timeEntriesQuery = $this->getTimeEntriesInvoiceGroupQuery($organization, $request, $member, $timeEntryAggregationService);
+        } else {
+            $timeEntriesQuery = $this->getTimeEntriesQuery($organization, $request, $member);
+        }
         $timeEntriesQuery->with([
             'task',
             'client',
@@ -255,6 +295,16 @@ class TimeEntryController extends Controller
             $filenameTemp = Gotenberg::save($request, $tempFolder->path(), $client);
             Storage::disk(config('filesystems.private'))
                 ->putFileAs($folderPath, new File($tempFolder->path($filenameTemp)), $filename);
+        } else if ($request->template === 'invoice') {
+            Excel::store(
+                new TimeEntriesInvoiceExport($timeEntriesQuery, $format, $timezone, $request),
+                $path,
+                config('filesystems.private'),
+                $format->getExportPackageType(),
+                [
+                    'visibility' => 'private',
+                ]
+            );
         } else {
             Excel::store(
                 new TimeEntriesDetailedExport($timeEntriesQuery, $format, $timezone),

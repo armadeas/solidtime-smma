@@ -391,7 +391,7 @@ class TimeEntryAggregationService
         }
     }
 
-    private function getGroupByQuery(TimeEntryAggregationType $group, string $timezone, Weekday $startOfWeek): string
+    public function getGroupByQuery(TimeEntryAggregationType $group, string $timezone, Weekday $startOfWeek): string
     {
         $timezoneShift = app(TimezoneService::class)->getShiftFromUtc(new CarbonTimeZone($timezone));
         if ($timezoneShift > 0) {

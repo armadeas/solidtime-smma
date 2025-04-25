@@ -13,6 +13,8 @@ import {
     ChevronRightIcon,
     ChevronDoubleRightIcon,
     ClockIcon,
+    DocumentCurrencyDollarIcon,
+    CurrencyDollarIcon,
 } from '@heroicons/vue/20/solid';
 import DateRangePicker from '@/packages/ui/src/Input/DateRangePicker.vue';
 import BillableIcon from '@/packages/ui/src/Icons/BillableIcon.vue';
@@ -83,6 +85,9 @@ const selectedMembers = ref<string[]>([]);
 const selectedTasks = ref<string[]>([]);
 const selectedClients = ref<string[]>([]);
 const billable = ref<'true' | 'false' | null>(null);
+const selectedTemplate = ref<'normal' | 'invoice'>('normal');
+const selectedRounding = ref<'nearest' | 'up' | 'down' | null>(null);
+const selectedRoundingValue = ref<number | null>(null);
 
 const { members } = storeToRefs(useMembersStore());
 const pageLimit = 15;
@@ -115,6 +120,9 @@ function getFilterAttributes() {
                 : undefined,
         tag_ids: selectedTags.value.length > 0 ? selectedTags.value : undefined,
         billable: billable.value !== null ? billable.value : undefined,
+        template: selectedTemplate.value,
+        rounding: selectedRounding.value,
+        rounding_value: selectedRoundingValue.value,
     };
     return params;
 }
@@ -356,6 +364,130 @@ async function downloadExport(format: ExportFormat) {
                                 :icon="BillableIcon"></ReportingFilterBadge>
                         </template>
                     </SelectDropdown>
+                    <SelectDropdown
+                        v-model="selectedTemplate"
+                        :get-key-from-item="(item) => item.value"
+                        :get-name-for-item="(item) => item.label"
+                        :items="[
+                            {
+                                label: 'Normal Template',
+                                value: 'normal',
+                            },
+                            {
+                                label: 'Invoice Template',
+                                value: 'invoice',
+                            },
+                        ]"
+                        @changed="updateFilteredTimeEntries">
+                        <template #trigger>
+                            <ReportingFilterBadge
+                                :active="selectedTemplate !== 'normal'"
+                                :title="selectedTemplate === 'invoice' ? 'Invoice Template' : 'Normal Template'"
+                                :icon="DocumentCurrencyDollarIcon"></ReportingFilterBadge>
+                        </template>
+                    </SelectDropdown>
+                    <SelectDropdown
+                        v-if="selectedTemplate === 'invoice'"
+                        v-model="selectedRounding"
+                        :get-key-from-item="(item) => item.value"
+                        :get-name-for-item="(item) => item.label"
+                        :items="[
+                            {
+                                label: 'No Rounding',
+                                value: null,
+                            },
+                            {
+                                label: 'Rounded Nearest',
+                                value: 'nearest',
+                            },
+                            {
+                                label: 'Rounded Up',
+                                value: 'up',
+                            },
+                            {
+                                label: 'Rounded Down',
+                                value: 'down',
+                            },
+                        ]"
+                        @changed="updateFilteredTimeEntries">
+                        <template #trigger>
+                            <ReportingFilterBadge
+                                :active="selectedRounding !== null"
+                                :title="
+                                    selectedRounding === 'nearest'
+                                        ? 'Rounded Nearest'
+                                        : selectedRounding === 'up'
+                                        ? 'Rounded Up'
+                                        : selectedRounding === 'down'
+                                        ? 'Rounded Down'
+                                        : 'No Rounding'"
+                                :icon="CurrencyDollarIcon"></ReportingFilterBadge>
+                        </template>
+                    </SelectDropdown>
+                    <SelectDropdown
+                        v-if="selectedRounding !== null"
+                        v-model="selectedRoundingValue"
+                        :get-key-from-item="(item) => item.value"
+                        :get-name-for-item="(item) => item.label"
+                        :items="[
+                            // {
+                            //     label: '1 Minute',
+                            //     value: 1,
+                            // },
+                            {
+                                label: '5 Minutes',
+                                value: 5,
+                            },
+                            {
+                                label: '6 Minutes',
+                                value: 6,
+                            },
+                            {
+                                label: '10 Minutes',
+                                value: 10,
+                            },
+                            {
+                                label: '12 Minutes',
+                                value: 12,
+                            },
+                            {
+                                label: '15 Minutes',
+                                value: 15,
+                            },
+                            {
+                                label: '30 Minutes',
+                                value: 30,
+                            },
+                            {
+                                label: '1 Hour',
+                                value: 60,
+                            },
+                        ]"
+                        @changed="updateFilteredTimeEntries">
+                        <template #trigger>
+                            <ReportingFilterBadge
+                                :title="
+                                    selectedRoundingValue === 1
+                                        ? '1 Minute'
+                                        : selectedRoundingValue === 5
+                                        ? '5 Minutes'
+                                        : selectedRoundingValue === 6
+                                        ? '6 Minutes'
+                                        : selectedRoundingValue === 10
+                                        ? '10 Minutes'
+                                        : selectedRoundingValue === 12
+                                        ? '12 Minutes'
+                                        : selectedRoundingValue === 15
+                                        ? '15 Minutes'
+                                        : selectedRoundingValue === 30
+                                        ? '30 Minutes'
+                                        : selectedRoundingValue === 60
+                                        ? '1 Hour'
+                                        : 'Rounding Value'"
+                                :active="selectedRoundingValue !== null"
+                                :icon="CurrencyDollarIcon"></ReportingFilterBadge>
+                        </template>
+                    </SelectDropdown>
                 </div>
                 <div>
                     <DateRangePicker
@@ -496,3 +628,4 @@ async function downloadExport(format: ExportFormat) {
     @apply text-text-primary bg-accent-300/10 border border-accent-300/20 rounded-md font-medium hover:bg-accent-300/20 active:bg-accent-300/20 outline-0 focus-visible:ring-2 focus:ring-ring transition ease-in-out duration-150;
 }
 </style>
+
