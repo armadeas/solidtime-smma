@@ -561,7 +561,7 @@ const showCreateProject = ref(false);
             <span>Add new project</span>
         </Badge>
     </div>
-    <Dropdown v-else v-model="open" :close-on-content-click="false" align="bottom">
+    <Dropdown v-else v-model="open" :close-on-content-click="false" align="center">
         <template #trigger>
             <ProjectBadge
                 ref="projectDropdownTrigger"
@@ -582,7 +582,7 @@ const showCreateProject = ref(false);
                     </span>
                     <ChevronRightIcon
                         v-if="currentTask"
-                        class="w-4 lg:w-5 text-muted shrink-0"></ChevronRightIcon>
+                        class="w-4 lg:w-5 text-text-secondary shrink-0"></ChevronRightIcon>
                     <div
                         v-if="currentTask"
                         class="min-w-0 shrink text-xs lg:text-sm truncate">
@@ -612,6 +612,7 @@ const showCreateProject = ref(false);
                     placeholder="Search for a project or task..."
                     @input="updateSearchValue"
                     @keydown.enter.prevent="addClientIfNoneExists"
+                    @keydown.esc.prevent="open = false"
                     @keydown.up.prevent="moveHighlightUp"
                     @keydown.down.prevent="moveHighlightDown"
                     @keydown.right.prevent="expandProject"

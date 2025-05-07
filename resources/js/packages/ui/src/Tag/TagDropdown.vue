@@ -5,17 +5,16 @@ import { type Component, computed, nextTick, ref, watch } from 'vue';
 import TagCreateModal from '@/packages/ui/src/Tag/TagCreateModal.vue';
 import MultiselectDropdownItem from '@/packages/ui/src/Input/MultiselectDropdownItem.vue';
 import type { Tag } from '@/packages/api/src';
-import type { Placement } from '@floating-ui/vue';
 import {UseFocusTrap} from "@vueuse/integrations/useFocusTrap/component";
 
 const props = withDefaults(
     defineProps<{
         tags: Tag[];
         createTag: (name: string) => Promise<Tag | undefined>;
-        align?: Placement;
+        align?: 'center' | 'end' | 'start';
     }>(),
     {
-        align: 'bottom-start',
+        align: 'start',
     }
 );
 
@@ -188,6 +187,7 @@ const showCreateTagModal = ref(false);
                     class="bg-card-background border-0 placeholder-muted text-sm text-text-primary py-2.5 focus:ring-0 border-b border-card-background-separator focus:border-card-background-separator w-full"
                     placeholder="Search for a Tag..."
                     @input="updateSearchValue"
+                    @keydown.esc.prevent="open = false"
                     @keydown.enter="addTagIfNoneExists"
                     @keydown.up.prevent="moveHighlightUp"
                     @keydown.down.prevent="moveHighlightDown" />

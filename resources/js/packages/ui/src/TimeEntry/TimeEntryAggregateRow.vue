@@ -78,9 +78,8 @@ function updateProjectAndTask(projectId: string, taskId: string) {
 
 const expanded = ref(false);
 
-function onSelectChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    if (target.checked) {
+function onSelectChange(checked: boolean) {
+    if (checked) {
         emit('selected', [...props.timeEntry.timeEntries]);
     } else {
         emit('unselected', [...props.timeEntry.timeEntries]);
@@ -94,7 +93,7 @@ function onSelectChange(event: Event) {
         data-testid="time_entry_row">
         <MainContainer class="min-w-0">
             <div
-                class="sm:flex py-2 items-center min-w-0 justify-between group">
+                class="sm:flex py-1.5 items-center min-w-0 justify-between group">
                 <div class="flex space-x-3 items-center min-w-0">
                     <Checkbox
                         :checked="
@@ -150,7 +149,7 @@ function onSelectChange(event: Event) {
                         "></BillableToggleButton>
                     <div class="flex-1">
                         <button
-                            class="hidden lg:block text-muted w-[110px] px-1 py-1.5 bg-transparent text-center hover:bg-card-background rounded-lg border border-transparent hover:border-card-border text-sm font-medium focus-visible:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-tertiary"
+                            class="hidden lg:block text-text-secondary w-[110px] px-1 py-1.5 bg-transparent text-center hover:bg-card-background rounded-lg border border-transparent hover:border-card-border text-sm font-medium focus-visible:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-tertiary"
                             @click="expanded = !expanded">
                             {{ formatStartEnd(timeEntry.start, timeEntry.end) }}
                         </button>

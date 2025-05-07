@@ -43,8 +43,13 @@ const page = usePage<{
         </template>
 
         <template #actions>
+<<<<<<< HEAD
 <!--            <Link
                 class="py-8 text-muted text-sm font-medium opacity-90 hover:opacity-100 transition"
+=======
+            <Link
+                class="py-8 text-text-secondary text-sm font-medium opacity-90 hover:opacity-100 transition"
+>>>>>>> main
                 :href="route('register')">
                 No account yet? <span class="text-white">Register here!</span>
             </Link>-->
@@ -89,7 +94,7 @@ const page = usePage<{
                 <Link
                     v-if="canResetPassword"
                     :href="route('password.request')"
-                    class="underline text-sm text-muted hover:text-text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    class="underline text-sm text-text-secondary hover:text-text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Forgot your password?
                 </Link>
 

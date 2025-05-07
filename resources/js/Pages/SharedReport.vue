@@ -5,7 +5,6 @@ import { ChartBarIcon } from '@heroicons/vue/20/solid';
 import ReportingChart from '@/Components/Common/Reporting/ReportingChart.vue';
 import { formatHumanReadableDuration } from '@/packages/ui/src/utils/time';
 import ReportingRow from '@/Components/Common/Reporting/ReportingRow.vue';
-import { getOrganizationCurrencyString } from '@/utils/money';
 import ReportingPieChart from '@/Components/Common/Reporting/ReportingPieChart.vue';
 import { formatCents } from '@/packages/ui/src/utils/money';
 import { computed, onMounted, ref } from 'vue';
@@ -14,6 +13,7 @@ import { api } from '@/packages/api/src';
 import { getRandomColorWithSeed } from '@/packages/ui/src/utils/color';
 import { useReportingStore } from '@/utils/useReporting';
 import { Head } from '@inertiajs/vue3';
+import { useTheme } from "@/utils/theme";
 
 const sharedSecret = ref<string | null>(null);
 
@@ -38,6 +38,13 @@ onMounted(() => {
     if (currentUrl.split('#').length === 2) {
         sharedSecret.value = currentUrl.split('#')[1];
     }
+});
+
+const reportCurrency = computed(() => {
+    if (sharedReportResponseData.value) {
+        return sharedReportResponseData.value?.currency;
+    }
+    return 'EUR';
 });
 
 const aggregatedTableTimeEntries = computed(() => {
@@ -136,12 +143,16 @@ function getGroupLabel(key: string) {
         return option.value === key;
     })?.label;
 }
+onMounted(async () => {
+    useTheme();
+})
+
 </script>
 
 <template>
     <Head :title="sharedReportResponseData?.name" />
 
-    <div class="text-muted">
+    <div class="text-text-secondary">
         <MainContainer
             class="py-3 sm:py-5 border-b border-default-background-separator flex justify-between items-center">
             <div class="flex items-center space-x-3 sm:space-x-6">
@@ -174,7 +185,7 @@ function getGroupLabel(key: string) {
                         class="grid items-center"
                         style="grid-template-columns: 1fr 100px 150px">
                         <div
-                            class="contents [&>*]:border-card-background-separator [&>*]:border-b [&>*]:bg-tertiary [&>*]:pb-1.5 [&>*]:pt-1 text-muted text-sm">
+                            class="contents [&>*]:border-card-background-separator [&>*]:border-b [&>*]:bg-tertiary [&>*]:pb-1.5 [&>*]:pt-1 text-text-secondary text-sm">
                             <div class="pl-6">Name</div>
                             <div class="text-right">Duration</div>
                             <div class="text-right pr-6">Cost</div>
@@ -188,6 +199,7 @@ function getGroupLabel(key: string) {
                             <ReportingRow
                                 v-for="entry in tableData"
                                 :key="entry.description ?? 'none'"
+                                :currency="reportCurrency"
                                 :entry="entry"
                                 :type="
                                     aggregatedTableTimeEntries.grouped_type
@@ -201,7 +213,7 @@ function getGroupLabel(key: string) {
                                     class="justify-end flex items-center font-medium">
                                     {{
                                         formatHumanReadableDuration(
-                                            aggregatedTableTimeEntries.seconds
+                                            aggregatedTableTimeEntries.seconds,
                                         )
                                     }}
                                 </div>
@@ -210,7 +222,7 @@ function getGroupLabel(key: string) {
                                     {{
                                         formatCents(
                                             aggregatedTableTimeEntries.cost,
-                                            getOrganizationCurrencyString()
+                                            reportCurrency,
                                         )
                                     }}
                                 </div>

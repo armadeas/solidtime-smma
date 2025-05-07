@@ -15,28 +15,29 @@ import {
     UserCircleIcon,
     UserGroupIcon,
     XMarkIcon,
+    DocumentTextIcon
 } from '@heroicons/vue/20/solid';
 import NavigationSidebarItem from '@/Components/NavigationSidebarItem.vue';
 import UserSettingsIcon from '@/Components/UserSettingsIcon.vue';
 import MainContainer from '@/packages/ui/src/MainContainer.vue';
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 import NotificationContainer from '@/Components/NotificationContainer.vue';
 import { initializeStores, refreshStores } from '@/utils/init';
 import {
     canManageBilling,
     canUpdateOrganization,
-    canViewClients,
+    canViewClients, canViewInvoices,
     canViewMembers,
     canViewProjects, canViewReport,
     canViewTags,
 } from '@/utils/permissions';
-import { isBillingActivated } from '@/utils/billing';
+import { isBillingActivated, isInvoicingActivated } from '@/utils/billing';
 import type { User } from '@/types/models';
 import { ArrowsRightLeftIcon } from '@heroicons/vue/16/solid';
 import { fetchToken, isTokenValid } from '@/utils/session';
 import UpdateSidebarNotification from '@/Components/UpdateSidebarNotification.vue';
 import BillingBanner from '@/Components/Billing/BillingBanner.vue';
-import { theme } from "@/utils/theme";
+import { useTheme } from "@/utils/theme";
 
 defineProps({
     title: String,
@@ -46,12 +47,7 @@ const showSidebarMenu = ref(false);
 const isUnloading = ref(false);
 onMounted(async () => {
 
-    document.documentElement.classList.add(theme.value);
-    watch(theme, (newTheme, oldTheme) => {
-        document.documentElement.classList.remove(oldTheme);
-        document.documentElement.classList.add(newTheme);
-    });
-
+    useTheme()
     // make sure that the initial requests are only loaded once, this can be removed once we move away from inertia
     if (window.initialDataLoaded !== true) {
         window.initialDataLoaded = true;
@@ -81,7 +77,7 @@ const page = usePage<{
 </script>
 
 <template>
-    <div v-bind="$attrs" class="flex flex-wrap bg-background text-muted">
+    <div v-bind="$attrs" class="flex flex-wrap bg-background text-text-secondary">
         <div
             :class="{
                 '!flex bg-default-background w-full z-[9999999999]':
@@ -186,6 +182,12 @@ const page = usePage<{
                                 :icon="TagIcon"
                                 :current="route().current('tags')"
                                 :href="route('tags')"></NavigationSidebarItem>
+                            <NavigationSidebarItem
+                                v-if="isInvoicingActivated() && canViewInvoices()"
+                                title="Invoices"
+                                :icon="DocumentTextIcon"
+                                :current="route().current('invoices')"
+                                href="/invoices"></NavigationSidebarItem>
                         </ul>
                     </nav>
                     <div
@@ -247,9 +249,9 @@ const page = usePage<{
         </div>
         <div class="flex-1 lg:ml-[230px] 2xl:ml-[250px] min-w-0">
             <div
-                class="lg:hidden w-full px-3 py-1 border-b border-b-default-background-separator text-muted flex justify-between items-center">
+                class="lg:hidden w-full px-3 py-1 border-b border-b-default-background-separator text-text-secondary flex justify-between items-center">
                 <Bars3Icon
-                    class="w-7 text-muted"
+                    class="w-7 text-text-secondary"
                     @click="showSidebarMenu = !showSidebarMenu"></Bars3Icon>
                 <OrganizationSwitcher></OrganizationSwitcher>
             </div>
@@ -260,7 +262,7 @@ const page = usePage<{
             <BillingBanner v-if="isBillingActivated()" />
 
             <div
-                class="min-h-screen bg-default-background border-l border-default-background-separator">
+                class="min-h-screen flex flex-col bg-default-background border-l border-default-background-separator">
                 <!-- Page Heading -->
                 <header
                     v-if="$slots.header"
@@ -273,8 +275,9 @@ const page = usePage<{
                 </header>
 
                 <!-- Page Content -->
-                <main class="pb-28">
+                <main class="pb-28 flex-1">
                     <slot />
+
                 </main>
             </div>
         </div>

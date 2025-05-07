@@ -115,7 +115,7 @@ services:
             - reverse-proxy
         restart: always
     playwright:
-        image: mcr.microsoft.com/playwright:v1.50.0-jammy
+        image: mcr.microsoft.com/playwright:v1.51.1-jammy
         command: ['npx', 'playwright', 'test', '--ui-port=8080', '--ui-host=0.0.0.0']
         working_dir: /src
         extra_hosts:
