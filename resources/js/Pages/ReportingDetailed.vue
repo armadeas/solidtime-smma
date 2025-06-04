@@ -89,6 +89,13 @@ const selectedTemplate = ref<'normal' | 'invoice'>('normal');
 const selectedRounding = ref<'nearest' | 'up' | 'down' | null>(null);
 const selectedRoundingValue = ref<number | null>(null);
 
+const selectedRoundingValueString = computed({
+    get: () => (selectedRoundingValue.value !== null ? selectedRoundingValue.value.toString() : null),
+    set: (value: string | null) => {
+        selectedRoundingValue.value = value !== null ? parseInt(value, 10) : null;
+    },
+});
+
 const { members } = storeToRefs(useMembersStore());
 const pageLimit = 15;
 const currentPage = ref(1);
@@ -428,44 +435,20 @@ async function downloadExport(format: ExportFormat) {
                     </SelectDropdown>
                     <SelectDropdown
                         v-if="selectedRounding !== null"
-                        v-model="selectedRoundingValue"
+                        v-model="selectedRoundingValueString"
                         :get-key-from-item="(item) => item.value"
                         :get-name-for-item="(item) => item.label"
                         :items="[
-                            // {
-                            //     label: '1 Minute',
-                            //     value: 1,
-                            // },
-                            {
-                                label: '5 Minutes',
-                                value: 5,
-                            },
-                            {
-                                label: '6 Minutes',
-                                value: 6,
-                            },
-                            {
-                                label: '10 Minutes',
-                                value: 10,
-                            },
-                            {
-                                label: '12 Minutes',
-                                value: 12,
-                            },
-                            {
-                                label: '15 Minutes',
-                                value: 15,
-                            },
-                            {
-                                label: '30 Minutes',
-                                value: 30,
-                            },
-                            {
-                                label: '1 Hour',
-                                value: 60,
-                            },
-                        ]"
-                        @changed="updateFilteredTimeEntries">
+        { label: '5 Minutes', value: '5' },
+        { label: '6 Minutes', value: '6' },
+        { label: '10 Minutes', value: '10' },
+        { label: '12 Minutes', value: '12' },
+        { label: '15 Minutes', value: '15' },
+        { label: '30 Minutes', value: '30' },
+        { label: '1 Hour', value: '60' },
+    ]"
+                        @changed="updateFilteredTimeEntries"
+                    >
                         <template #trigger>
                             <ReportingFilterBadge
                                 :title="

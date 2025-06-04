@@ -50,7 +50,7 @@ async function startTaskTimer() {
         class="px-3.5 py-2 grid grid-cols-5 border-b border-b-card-background-separator">
         <div class="col-span-4">
             <p class="font-medium text-text-primary text-sm pb-1 truncate">
-                <span v-if="timeEntry.description"> {{ timeEntry.description }}</span>
+                <span v-if="timeEntry.description" :title="timeEntry.description"> {{ timeEntry.description }}</span>
                 <span v-else class="text-text-tertiary">No description</span>
             </p>
             <ProjectBadge
@@ -58,7 +58,7 @@ async function startTaskTimer() {
                 class="min-w-0 max-w-full"
                 :color="project?.color">
                 <div class="flex items-center lg:space-x-0.5 min-w-0">
-                    <span class="whitespace-nowrap ">
+                    <span class="whitespace-nowrap truncate " :title="project?.name ?? ''">
                         {{ project?.name ?? 'No Project' }}
                     </span>
                     <ChevronRightIcon

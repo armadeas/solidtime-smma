@@ -43,7 +43,7 @@ const page = usePage<{
         </template>
 
         <template #actions>
-<<<<<<< HEAD
+
 <!--            <Link
                 class="py-8 text-muted text-sm font-medium opacity-90 hover:opacity-100 transition"
 =======
