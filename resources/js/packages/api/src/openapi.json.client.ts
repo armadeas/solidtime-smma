@@ -2650,6 +2650,26 @@ const endpoints = makeApi([
                 type: 'Query',
                 schema: z.enum(['true', 'false', 'all']).optional(),
             },
+            {
+                name: 'sort',
+                type: 'Query',
+                schema: sort,
+            },
+            {
+                name: 'search',
+                type: 'Query',
+                schema: sort,
+            },
+            {
+                name: 'clients',
+                type: 'Query',
+                schema: clients,
+            },
+            {
+                name: 'members',
+                type: 'Query',
+                schema: clients,
+            },
         ],
         response: z
             .object({
@@ -3235,7 +3255,7 @@ const endpoints = makeApi([
                 schema: z.string(),
             },
         ],
-        response: z.void(),
+        response: z.null(),
         errors: [
             {
                 status: 401,
@@ -3681,12 +3701,12 @@ Users with the permission &#x60;time-entries:view:own&#x60; can only use this en
             {
                 name: 'start',
                 type: 'Query',
-                schema: start,
+                schema: sort,
             },
             {
                 name: 'end',
                 type: 'Query',
-                schema: start,
+                schema: sort,
             },
             {
                 name: 'active',

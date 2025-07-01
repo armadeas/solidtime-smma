@@ -13,7 +13,12 @@ import { useNotificationsStore } from '@/utils/notification';
 export const useProjectsStore = defineStore('projects', () => {
     const projectResponse = ref<ProjectResponse | null>(null);
     const { handleApiRequestNotifications } = useNotificationsStore();
-    async function fetchProjects() {
+    async function fetchProjects(
+        search?: string,
+        order?: 'asc' | 'desc',
+        clients?: string[],
+        members?: string[]
+    ) {
         const organization = getCurrentOrganizationId();
         if (organization) {
             projectResponse.value = await handleApiRequestNotifications(
@@ -24,6 +29,14 @@ export const useProjectsStore = defineStore('projects', () => {
                         },
                         queries: {
                             archived: 'all',
+                            ...(search ? { search: search } : {}),
+                            ...(order ? { order } : {}),
+                            ...(clients && clients.length > 0
+                                ? { clients: clients }
+                                : {}),
+                            ...(members && members.length > 0
+                                ? { members: members }
+                                : {}),
                         },
                     }),
                 undefined,

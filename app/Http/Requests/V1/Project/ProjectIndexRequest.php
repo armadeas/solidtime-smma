@@ -26,6 +26,23 @@ class ProjectIndexRequest extends FormRequest
                 'string',
                 'in:true,false,all',
             ],
+            'sort' => [
+                'string',
+                'nullable',
+            ],
+            'search' => [
+                'string',
+                'nullable',
+                'max:255',
+            ],
+            'clients' => [
+                'array',
+                'nullable',
+            ],
+            'members' => [
+                'array',
+                'nullable',
+            ],
         ];
     }
 
