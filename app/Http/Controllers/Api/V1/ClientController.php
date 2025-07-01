@@ -41,7 +41,18 @@ class ClientController extends Controller
 
         $clientsQuery = Client::query()
             ->whereBelongsTo($organization, 'organization')
-            ->orderBy('created_at', 'desc');
+            ->when($request->order, function ($query, $order) {
+                $query->orderBy('name', $order);
+            })
+            ->when($request->search, function ($query, $search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%'])
+                        ->orWhereRaw('LOWER(email) LIKE ?', ['%' . strtolower($search) . '%'])
+                        ->orWhereRaw('LOWER(phone) LIKE ?', ['%' . strtolower($search) . '%'])
+//                        ->orWhereRaw('LOWER(taxNumber) LIKE ?', ['%' . strtolower($search) . '%'])
+                        ->orWhereRaw('LOWER(address) LIKE ?', ['%' . strtolower($search) . '%']);
+                });
+            });
 
         $filterArchived = $request->getFilterArchived();
         if ($filterArchived === 'true') {

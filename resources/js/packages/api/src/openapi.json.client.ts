@@ -26,6 +26,7 @@ const ApiTokenWithAccessTokenResource = z
         access_token: z.string(),
     })
     .passthrough();
+const sort = z.union([z.string(), z.null()]).optional();
 const ClientResource = z
     .object({
         id: z.string(),
@@ -58,7 +59,6 @@ const ClientStoreRequest = z
 const ClientUpdateRequest = z
     .object({
         name: z.string().min(1).max(255),
-        is_archived: z.boolean().optional(),
         email: z.string().max(255).email(),
         phone: z.string().max(20),
         taxNumber: z.string().max(50),
@@ -374,6 +374,7 @@ const OrganizationUpdateRequest = z
     })
     .partial()
     .passthrough();
+const clients = z.union([z.array(z.string()), z.null()]).optional();
 const ProjectResource = z
     .object({
         id: z.string(),
@@ -770,6 +771,7 @@ export const schemas = {
     ApiTokenCollection,
     ApiTokenStoreRequest,
     ApiTokenWithAccessTokenResource,
+    sort,
     ClientResource,
     ClientCollection,
     ClientStoreRequest,
@@ -799,6 +801,7 @@ export const schemas = {
     IntervalFormat,
     TimeFormat,
     OrganizationUpdateRequest,
+    clients,
     ProjectResource,
     ProjectStoreRequest,
     ProjectUpdateRequest,
@@ -1267,6 +1270,16 @@ const endpoints = makeApi([
                 name: 'archived',
                 type: 'Query',
                 schema: z.enum(['true', 'false', 'all']).optional(),
+            },
+            {
+                name: 'sort',
+                type: 'Query',
+                schema: sort,
+            },
+            {
+                name: 'search',
+                type: 'Query',
+                schema: sort,
             },
         ],
         response: z.object({ data: ClientCollection }).passthrough(),
@@ -2849,7 +2862,7 @@ const endpoints = makeApi([
                 schema: z.string(),
             },
         ],
-        response: z.void(),
+        response: z.null(),
         errors: [
             {
                 status: 400,

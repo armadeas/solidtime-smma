@@ -26,6 +26,16 @@ class ClientIndexRequest extends FormRequest
                 'string',
                 'in:true,false,all',
             ],
+            'sort' => [
+                'string',
+                'nullable',
+            ],
+            'search' => [
+                'string',
+                'nullable',
+                'max:255',
+            ],
+
         ];
     }
 

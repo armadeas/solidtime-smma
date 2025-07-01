@@ -14,7 +14,7 @@ export const useClientsStore = defineStore('clients', () => {
     const clientResponse = ref<ClientIndexResponse | null>(null);
     const { handleApiRequestNotifications } = useNotificationsStore();
 
-    async function fetchClients() {
+    async function fetchClients(search?: string, order?: 'asc' | 'desc') {
         const organization = getCurrentOrganizationId();
         if (organization) {
             clientResponse.value = await handleApiRequestNotifications(
@@ -22,6 +22,8 @@ export const useClientsStore = defineStore('clients', () => {
                     api.getClients({
                         queries: {
                             archived: 'all',
+                            ...(search ? { search: search } : {}),
+                            ...(order ? { order } : {}),
                         },
                         params: {
                             organization: organization,
