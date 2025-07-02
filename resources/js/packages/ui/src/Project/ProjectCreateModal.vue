@@ -28,7 +28,7 @@ const props = defineProps<{
     createProject: (project: CreateProjectBody) => Promise<Project | undefined>;
     createClient: (client: CreateClientBody) => Promise<Client | undefined>;
     currency: string;
-    enableEstimatedTime: boolean;
+    enableEstimatedTime: boolean | undefined;
 }>();
 
 const activeClients = computed(() => {

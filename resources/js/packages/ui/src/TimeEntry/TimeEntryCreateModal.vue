@@ -79,6 +79,14 @@ watch(
             if (project) {
                 timeEntry.value.billable = project.is_billable;
             }
+            const client = props.clients.find(
+                (c) => c.id === project?.client_id
+            );
+            if (client) {
+                clientName.value = client.name;
+            } else {
+                clientName.value = '';
+            }
         }
     }
 );
@@ -88,6 +96,8 @@ const localStart = ref(
 );
 
 const localEnd = ref(getLocalizedDayJs(timeEntryDefaultValues.end).format());
+
+const clientName = ref('');
 
 watch(localStart, (value) => {
     timeEntry.value.start = getLocalizedDayJs(value).utc().format();
@@ -161,6 +171,12 @@ type BillableOption = {
                             :projects="projects"
                             :tasks="tasks"
                             :enable-estimated-time="enableEstimatedTime"></TimeTrackerProjectTaskDropdown>
+                        <div class="text-sm flex space-x-1 mt-2">
+                            <span class="text-text-secondary text-xs">
+                                Client :
+                                <span class="font-semibold"> {{ clientName }}</span>
+                            </span>
+                        </div>
                     </div>
                     <div class="flex items-center space-x-2">
                         <div class="flex-col">
