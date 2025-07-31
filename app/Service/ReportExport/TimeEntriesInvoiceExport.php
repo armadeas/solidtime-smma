@@ -28,7 +28,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 /**
  * @implements WithMapping<TimeEntry>
  */
-class TimeEntriesInvoiceExport implements FromQuery, ShouldAutoSize, WithColumnFormatting, WithHeadings, WithMapping, WithStyles
+class TimeEntriesInvoiceExport implements FromQuery, ShouldAutoSize, WithColumnFormatting, WithHeadings, WithMapping, WithStyles, \Maatwebsite\Excel\Concerns\WithEvents
 {
     use Exportable;
 
@@ -72,7 +72,7 @@ class TimeEntriesInvoiceExport implements FromQuery, ShouldAutoSize, WithColumnF
                 'A' => 'yyyy-mm-dd',
                 'D' => NumberFormat::FORMAT_NUMBER_00,
                 'E' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                'F' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                'F' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1, // Pastikan total fee juga pakai format angka
             ];
         } elseif ($this->exportFormat === ExportFormat::ODS) {
             return [
@@ -81,14 +81,12 @@ class TimeEntriesInvoiceExport implements FromQuery, ShouldAutoSize, WithColumnF
         } else {
             throw new LogicException('Unsupported export format.');
         }
-
     }
 
-    /**
-     * @return array<int|string, array<string, array<string, bool>>>
-     */
     public function styles(Worksheet $sheet): array
     {
+        // Set lebar kolom Description (kolom C) menjadi 130
+        $sheet->getColumnDimension('C')->setWidth(130);
         return [
             // Style the first row as bold text.
             1 => ['font' => ['bold' => true]],
@@ -119,26 +117,64 @@ class TimeEntriesInvoiceExport implements FromQuery, ShouldAutoSize, WithColumnF
         $interval = app(IntervalService::class);
         $duration = $interval->roundTime($model->totalhours, $this->request->rounding, (int) $this->request->rounding_value);
 
+        // Format description: capitalize first letter, add period if missing
+        $description = trim($model->description);
+        if ($description !== '') {
+            $description = ucfirst($description);
+            if (!preg_match('/[.!?]$/', $description)) {
+                $description .= '.';
+            }
+        }
+
         if ($this->exportFormat === ExportFormat::XLSX) {
-            return [
+            // Excel formula for Total Fee: =D{row}*E{row}
+            // Data starts at row 2 (after headings)
+            static $rowNumber = 2;
+            $rate = $model->billable_rate / 100; // convert cents to normal value
+            $result = [
                 Date::PHPToExcel($model->group_day),
                 implode('', array_map(fn($part) => strtoupper($part[0]), explode(' ', $model->user->name))),
-                $model->description,
+                $description,
                 $duration->totalHours,
-                NumberFormat::toFormattedString($model->billable_rate ? (BigDecimal::ofUnscaledValue($model->billable_rate, 2)) : 0, NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1),
-                NumberFormat::toFormattedString($model->billable_rate ? (BigDecimal::ofUnscaledValue($duration->totalHours * $model->billable_rate, 2)) : 0, NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1),
+                $rate,
+                "=D{$rowNumber}*E{$rowNumber}",
             ];
+            $rowNumber++;
+            return $result;
         } elseif ($this->exportFormat === ExportFormat::ODS) {
+            $rate = $model?->billable_rate ? $model->billable_rate / 100 : null;
             return [
                 Date::dateTimeToExcel($model->start),
                 implode('', array_map(fn($part) => strtoupper($part[0]), explode(' ', $model->user->name))),
-                $model->description,
+                $description,
                 $model?->totalhours,
-                $model?->billable_rate,
-                $model?->totalhours * $model?->billable_rate,
+                $rate,
+                $model?->totalhours * $rate,
             ];
         } else {
             throw new LogicException('Unsupported export format.');
         }
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            \Maatwebsite\Excel\Events\AfterSheet::class => function(\Maatwebsite\Excel\Events\AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                // Set lebar kolom Description (kolom C) menjadi 130 setelah autosize
+                $sheet->getColumnDimension('C')->setWidth(130);
+                $highestDataRow = $sheet->getHighestDataRow();
+                $totalRow = $highestDataRow + 1;
+                // Total Jam (kolom D)
+                $sheet->setCellValue("C{$totalRow}", 'Total');
+                $sheet->setCellValue("D{$totalRow}", "=SUM(D2:D{$highestDataRow})");
+                // Total Fee (kolom F)
+                $sheet->setCellValue("F{$totalRow}", "=SUM(F2:F{$highestDataRow})");
+                // Format angka untuk total fee (kolom F)
+                $sheet->getStyle("F{$totalRow}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
+                // Bold untuk baris total
+                $sheet->getStyle("C{$totalRow}:F{$totalRow}")->getFont()->setBold(true);
+            }
+        ];
     }
 }
