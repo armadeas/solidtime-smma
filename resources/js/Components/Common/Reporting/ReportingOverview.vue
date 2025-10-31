@@ -389,7 +389,7 @@ const tableData = computed(() => {
                         :group-by-options="groupByOptions.filter((el) => el.value !== group)"
                         @changed="updateTableReporting"></ReportingGroupBySelect>
                 </div>
-                <div class="grid items-center" style="grid-template-columns: 1fr 100px 150px">
+                <div class="grid items-center" style="grid-template-columns: 1fr 100px 230px">
                     <div
                         class="contents [&>*]:border-card-background-separator [&>*]:border-b [&>*]:bg-tertiary [&>*]:pb-1.5 [&>*]:pt-1 text-text-secondary text-sm">
                         <div class="pl-6">Name</div>
