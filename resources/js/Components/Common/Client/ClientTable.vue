@@ -70,9 +70,7 @@ function handleSearch() {
                     <UserCircleIcon
                         class="w-8 text-icon-default inline pb-2"></UserCircleIcon>
                     <h3 class="text-text-primary font-semibold">No clients found</h3>
-                    <p v-if="canCreateClients()" class="pb-5">
-                        Create your first client now!
-                    </p>
+                    <p v-if="canCreateClients()" class="pb-5">Create your first client now!</p>
                     <SecondaryButton
                         v-if="canCreateClients()"
                         :icon="PlusIcon as Component"

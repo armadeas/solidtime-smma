@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ProjectMoreOptionsDropdown from '@/Components/Common/Project/ProjectMoreOptionsDropdown.vue';
 import type { Project } from '@/packages/api/src';
-import { computed, ref } from 'vue';
+import { computed, ref, inject, type ComputedRef } from 'vue';
 import { CheckCircleIcon } from '@heroicons/vue/20/solid';
 import { useClientsStore } from '@/utils/useClients';
 import { storeToRefs } from 'pinia';
@@ -15,6 +15,7 @@ import EstimatedTimeProgress from '@/packages/ui/src/EstimatedTimeProgress.vue';
 import UpgradeBadge from '@/Components/Common/UpgradeBadge.vue';
 import { formatHumanReadableDuration } from '../../../packages/ui/src/utils/time';
 import { isAllowedToPerformPremiumAction } from '@/utils/billing';
+import type { Organization } from '@/packages/api/src';
 
 const { clients } = storeToRefs(useClientsStore());
 const { tasks } = storeToRefs(useTasksStore());
@@ -25,14 +26,11 @@ const props = defineProps<{
 }>();
 
 const client = computed(() => {
-    return clients.value.find(
-        (client) => client.id === props.project.client_id
-    );
+    return clients.value.find((client) => client.id === props.project.client_id);
 });
 
 const projectTasksCount = computed(() => {
-    return tasks.value.filter((task) => task.project_id === props.project.id)
-        .length;
+    return tasks.value.filter((task) => task.project_id === props.project.id).length;
 });
 
 function deleteProject() {
@@ -46,12 +44,17 @@ function archiveProject() {
     });
 }
 
+const organization = inject<ComputedRef<Organization>>('organization');
+
 const billableRateInfo = computed(() => {
     if (props.project.is_billable) {
         if (props.project.billable_rate) {
             return formatCents(
                 props.project.billable_rate,
-                getOrganizationCurrencyString()
+                getOrganizationCurrencyString(),
+                organization?.value?.currency_format,
+                organization?.value?.currency_symbol,
+                organization?.value?.number_format
             );
         } else {
             return 'Default Rate';
@@ -82,23 +85,25 @@ const showEditProjectModal = ref(false);
             <span class="text-text-secondary"> {{ projectTasksCount }} Tasks </span>
         </div>
         <div class="whitespace-nowrap min-w-0 px-3 py-4 text-sm text-text-secondary">
-            <div
-                v-if="project.client_id"
-                class="overflow-ellipsis overflow-hidden">
+            <div v-if="project.client_id" class="overflow-ellipsis overflow-hidden">
                 {{ client?.name }}
             </div>
             <div v-else>No client</div>
         </div>
         <div class="whitespace-nowrap px-3 py-4 text-sm text-text-secondary">
             <div v-if="project.spent_time">
-                {{ formatHumanReadableDuration(project.spent_time) }}
+                {{
+                    formatHumanReadableDuration(
+                        project.spent_time,
+                        organization?.interval_format,
+                        organization?.number_format
+                    )
+                }}
             </div>
             <div v-else>--</div>
         </div>
-        <div
-            class="whitespace-nowrap px-3 flex items-center text-sm text-text-secondary">
-            <UpgradeBadge
-                v-if="!isAllowedToPerformPremiumAction()"></UpgradeBadge>
+        <div class="whitespace-nowrap px-3 flex items-center text-sm text-text-secondary">
+            <UpgradeBadge v-if="!isAllowedToPerformPremiumAction()"></UpgradeBadge>
             <EstimatedTimeProgress
                 v-else-if="project.estimated_time"
                 :estimated="project.estimated_time"

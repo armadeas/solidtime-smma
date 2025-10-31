@@ -35,15 +35,9 @@ const props = defineProps<{
             </a>
         </div>
         <div class="px-3 py-1.5 text-left font-semibold text-text-primary">Client</div>
-        <div class="px-3 py-1.5 text-left font-semibold text-text-primary">
-            Total Time
-        </div>
-        <div class="px-3 py-1.5 text-left font-semibold text-text-primary">
-            Progress
-        </div>
-        <div
-            v-if="showBillableRate"
-            class="px-3 py-1.5 text-left font-semibold text-text-primary">
+        <div class="px-3 py-1.5 text-left font-semibold text-text-primary">Total Time</div>
+        <div class="px-3 py-1.5 text-left font-semibold text-text-primary">Progress</div>
+        <div v-if="showBillableRate" class="px-3 py-1.5 text-left font-semibold text-text-primary">
             Billable Rate
         </div>
         <div class="px-3 py-1.5 text-left font-semibold text-text-primary">Status</div>

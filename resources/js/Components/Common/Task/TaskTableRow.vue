@@ -6,15 +6,18 @@ import TaskMoreOptionsDropdown from '@/Components/Common/Task/TaskMoreOptionsDro
 import TableRow from '@/Components/TableRow.vue';
 import { canDeleteTasks } from '@/utils/permissions';
 import TaskEditModal from '@/Components/Common/Task/TaskEditModal.vue';
-import { ref } from 'vue';
+import { ref, inject, type ComputedRef } from 'vue';
 import { isAllowedToPerformPremiumAction } from '@/utils/billing';
 import EstimatedTimeProgress from '@/packages/ui/src/EstimatedTimeProgress.vue';
 import UpgradeBadge from '@/Components/Common/UpgradeBadge.vue';
 import { formatHumanReadableDuration } from '../../../packages/ui/src/utils/time';
+import type { Organization } from '@/packages/api/src';
 
 const props = defineProps<{
     task: Task;
 }>();
+
+const organization = inject<ComputedRef<Organization>>('organization');
 
 function deleteTask() {
     useTasksStore().deleteTask(props.task.id);
@@ -41,14 +44,18 @@ const showTaskEditModal = ref(false);
         <div
             class="whitespace-nowrap px-3 py-4 text-sm text-text-secondary flex space-x-1 items-center font-medium">
             <span v-if="task.spent_time">
-                {{ formatHumanReadableDuration(task.spent_time) }}
+                {{
+                    formatHumanReadableDuration(
+                        task.spent_time,
+                        organization?.interval_format,
+                        organization?.number_format
+                    )
+                }}
             </span>
             <span v-else> -- </span>
         </div>
-        <div
-            class="whitespace-nowrap px-3 flex items-center text-sm text-text-secondary">
-            <UpgradeBadge
-                v-if="!isAllowedToPerformPremiumAction()"></UpgradeBadge>
+        <div class="whitespace-nowrap px-3 flex items-center text-sm text-text-secondary">
+            <UpgradeBadge v-if="!isAllowedToPerformPremiumAction()"></UpgradeBadge>
             <EstimatedTimeProgress
                 v-else-if="task.estimated_time"
                 :estimated="task.estimated_time"
@@ -74,9 +81,7 @@ const showTaskEditModal = ref(false);
                 @edit="showTaskEditModal = true"
                 @delete="deleteTask"></TaskMoreOptionsDropdown>
         </div>
-        <TaskEditModal
-            v-model:show="showTaskEditModal"
-            :task="task"></TaskEditModal>
+        <TaskEditModal v-model:show="showTaskEditModal" :task="task"></TaskEditModal>
     </TableRow>
 </template>
 

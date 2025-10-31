@@ -38,6 +38,8 @@ class ClientController extends Controller
     public function index(Organization $organization, ClientIndexRequest $request): ClientCollection
     {
         $this->checkPermission($organization, 'clients:view');
+        $canViewAllClients = $this->hasPermission($organization, 'clients:view:all');
+        $user = $this->user();
 
         $clientsQuery = Client::query()
             ->whereBelongsTo($organization, 'organization')
@@ -53,6 +55,10 @@ class ClientController extends Controller
                         ->orWhereRaw('LOWER(address) LIKE ?', ['%' . strtolower($search) . '%']);
                 });
             });
+
+        if (! $canViewAllClients) {
+            $clientsQuery->visibleByEmployee($user);
+        }
 
         $filterArchived = $request->getFilterArchived();
         if ($filterArchived === 'true') {

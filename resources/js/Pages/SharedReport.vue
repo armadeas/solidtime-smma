@@ -7,13 +7,14 @@ import { formatHumanReadableDuration } from '@/packages/ui/src/utils/time';
 import ReportingRow from '@/Components/Common/Reporting/ReportingRow.vue';
 import ReportingPieChart from '@/Components/Common/Reporting/ReportingPieChart.vue';
 import { formatCents } from '@/packages/ui/src/utils/money';
-import { computed, onMounted, ref } from 'vue';
+import type { CurrencyFormat } from '@/packages/ui/src/utils/money';
+import { computed, onMounted, provide, ref } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 import { api } from '@/packages/api/src';
 import { getRandomColorWithSeed } from '@/packages/ui/src/utils/color';
 import { useReportingStore } from '@/utils/useReporting';
 import { Head } from '@inertiajs/vue3';
-import { useTheme } from "@/utils/theme";
+import { useTheme } from '@/utils/theme';
 
 const sharedSecret = ref<string | null>(null);
 
@@ -46,6 +47,37 @@ const reportCurrency = computed(() => {
     }
     return 'EUR';
 });
+
+const reportIntervalFormat = computed(() => {
+    return sharedReportResponseData.value?.interval_format;
+});
+
+const reportNumberFormat = computed(() => {
+    return sharedReportResponseData.value?.number_format;
+});
+
+const reportCurrencyFormat = computed(() => {
+    return (sharedReportResponseData.value?.currency_format ?? 'symbol-before') as CurrencyFormat;
+});
+
+const reportDateFormat = computed(() => {
+    return sharedReportResponseData.value?.date_format;
+});
+
+const reportCurrencySymbol = computed(() => {
+    return sharedReportResponseData.value?.currency_symbol;
+});
+
+provide(
+    'organization',
+    computed(() => ({
+        'number_format': reportNumberFormat.value,
+        'interval_format': reportIntervalFormat.value,
+        'currency_format': reportCurrencyFormat.value,
+        'currency_symbol': reportCurrencySymbol.value,
+        'date_format': reportDateFormat.value,
+    }))
+);
 
 const aggregatedTableTimeEntries = computed(() => {
     if (sharedReportResponseData.value) {
@@ -93,8 +125,7 @@ const groupedPieChartData = computed(() => {
                 return {
                     value: entry.seconds,
                     name: emptyPlaceholder[
-                        aggregatedTableTimeEntries.value?.grouped_type ??
-                            'project'
+                        aggregatedTableTimeEntries.value?.grouped_type ?? 'project'
                     ],
                     color: '#CCCCCC',
                 };
@@ -102,9 +133,7 @@ const groupedPieChartData = computed(() => {
             return {
                 value: entry.seconds,
                 name: entry.description,
-                color:
-                    entry.color ??
-                    getRandomColorWithSeed(entry.description ?? 'none'),
+                color: entry.color ?? getRandomColorWithSeed(entry.description ?? 'none'),
             };
         }) ?? []
     );
@@ -117,20 +146,14 @@ const tableData = computed(() => {
             cost: entry.cost,
             description:
                 entry.description ??
-                emptyPlaceholder[
-                    aggregatedTableTimeEntries.value?.grouped_type ?? 'project'
-                ],
+                emptyPlaceholder[aggregatedTableTimeEntries.value?.grouped_type ?? 'project'],
             grouped_data:
                 entry.grouped_data?.map((el) => {
                     return {
                         seconds: el.seconds,
                         cost: el.cost,
                         description:
-                            el.description ??
-                            emptyPlaceholder[
-                                aggregatedTableTimeEntries.value
-                                    ?.grouped_type ?? 'project'
-                            ],
+                            el.description ?? emptyPlaceholder[entry.grouped_type ?? 'project'],
                     };
                 }) ?? [],
         };
@@ -138,15 +161,16 @@ const tableData = computed(() => {
 });
 
 const { groupByOptions } = useReportingStore();
+
 function getGroupLabel(key: string) {
     return groupByOptions.find((option) => {
         return option.value === key;
     })?.label;
 }
+
 onMounted(async () => {
     useTheme();
-})
-
+});
 </script>
 
 <template>
@@ -163,9 +187,7 @@ onMounted(async () => {
             <div class="pt-10 w-full px-3 relative">
                 <ReportingChart
                     :grouped-type="aggregatedGraphTimeEntries?.grouped_type"
-                    :grouped-data="
-                        aggregatedGraphTimeEntries?.grouped_data
-                    "></ReportingChart>
+                    :grouped-data="aggregatedGraphTimeEntries?.grouped_data"></ReportingChart>
             </div>
         </MainContainer>
         <MainContainer>
@@ -177,13 +199,9 @@ onMounted(async () => {
                         Group by
                         <strong class="px-2">{{ getGroupLabel(group) }}</strong>
                         and
-                        <strong class="px-2">{{
-                            getGroupLabel(subGroup)
-                        }}</strong>
+                        <strong class="px-2">{{ getGroupLabel(subGroup) }}</strong>
                     </div>
-                    <div
-                        class="grid items-center"
-                        style="grid-template-columns: 1fr 100px 150px">
+                    <div class="grid items-center" style="grid-template-columns: 1fr 100px 150px">
                         <div
                             class="contents [&>*]:border-card-background-separator [&>*]:border-b [&>*]:bg-tertiary [&>*]:pb-1.5 [&>*]:pt-1 text-text-secondary text-sm">
                             <div class="pl-6">Name</div>
@@ -193,36 +211,35 @@ onMounted(async () => {
                         <template
                             v-if="
                                 aggregatedTableTimeEntries?.grouped_data &&
-                                aggregatedTableTimeEntries.grouped_data
-                                    ?.length > 0
+                                aggregatedTableTimeEntries.grouped_data?.length > 0
                             ">
                             <ReportingRow
                                 v-for="entry in tableData"
                                 :key="entry.description ?? 'none'"
                                 :currency="reportCurrency"
-                                :entry="entry"
-                                :type="
-                                    aggregatedTableTimeEntries.grouped_type
-                                "></ReportingRow>
+                                :currency-format="reportCurrencyFormat"
+                                :entry="entry"></ReportingRow>
                             <div
                                 class="contents [&>*]:transition text-text-tertiary [&>*]:h-[50px]">
                                 <div class="flex items-center pl-6 font-medium">
                                     <span>Total</span>
                                 </div>
-                                <div
-                                    class="justify-end flex items-center font-medium">
+                                <div class="justify-end flex items-center font-medium">
                                     {{
                                         formatHumanReadableDuration(
                                             aggregatedTableTimeEntries.seconds,
+                                            reportIntervalFormat,
+                                            reportNumberFormat
                                         )
                                     }}
                                 </div>
-                                <div
-                                    class="justify-end pr-6 flex items-center font-medium">
+                                <div class="justify-end pr-6 flex items-center font-medium">
                                     {{
                                         formatCents(
                                             aggregatedTableTimeEntries.cost,
                                             reportCurrency,
+                                            reportCurrencyFormat,
+                                            reportCurrencySymbol
                                         )
                                     }}
                                 </div>
@@ -239,8 +256,7 @@ onMounted(async () => {
                     </div>
                 </div>
                 <div class="px-2 lg:px-4">
-                    <ReportingPieChart
-                        :data="groupedPieChartData"></ReportingPieChart>
+                    <ReportingPieChart :data="groupedPieChartData"></ReportingPieChart>
                 </div>
             </div>
         </MainContainer>

@@ -3,11 +3,7 @@ import TextInput from '@/packages/ui/src/Input/TextInput.vue';
 import SecondaryButton from '@/packages/ui/src/Buttons/SecondaryButton.vue';
 import DialogModal from '@/packages/ui/src/DialogModal.vue';
 import { computed, ref } from 'vue';
-import type {
-    CreateClientBody,
-    CreateProjectBody,
-    Project,
-} from '@/packages/api/src';
+import type { CreateClientBody, CreateProjectBody, Project } from '@/packages/api/src';
 import PrimaryButton from '@/packages/ui/src/Buttons/PrimaryButton.vue';
 import { useProjectsStore } from '@/utils/useProjects';
 import { useFocus } from '@vueuse/core';
@@ -48,7 +44,7 @@ const project = ref<CreateProjectBody>({
 
 async function submit() {
     if (props.originalProject.billable_rate !== project.value.billable_rate) {
-        // 
+        // make sure that the alert modal is not immediately submitted when user presses enter
         setTimeout(() => {
             showBillableRateModal.value = true;
         }, 0);
@@ -64,9 +60,7 @@ useFocus(projectNameInput, { initialValue: true });
 
 const currentClientName = computed(() => {
     if (project.value.client_id) {
-        return clients.value.find(
-            (client) => client.id === project.value.client_id
-        )?.name;
+        return clients.value.find((client) => client.id === project.value.client_id)?.name;
     }
     return 'No Client';
 });
@@ -87,8 +81,7 @@ async function submitBillableRate() {
         </template>
 
         <template #content>
-            <div
-                class="sm:flex items-center space-y-2 sm:space-y-0 sm:space-x-5">
+            <div class="sm:flex items-center space-y-2 sm:space-y-0 sm:space-x-5">
                 <div class="flex-1 flex items-center">
                     <div class="text-center">
                         <InputLabel for="color" value="Color" />
@@ -122,8 +115,7 @@ async function submitBillableRate() {
                                 class="bg-input-background cursor-pointer hover:bg-tertiary"
                                 size="xlarge">
                                 <div class="flex items-center space-x-2">
-                                    <UserCircleIcon
-                                        class="w-5 text-icon-default"></UserCircleIcon>
+                                    <UserCircleIcon class="w-5 text-icon-default"></UserCircleIcon>
                                     <span class="whitespace-nowrap">
                                         {{ currentClientName }}
                                     </span>
@@ -133,13 +125,11 @@ async function submitBillableRate() {
                     </ClientDropdown>
                 </div>
             </div>
-            <div class="lg:grid grid-cols-2 gap-12">
+            <div>
                 <div>
                     <ProjectEditBillableSection
                         v-model:is-billable="project.is_billable"
-                        v-model:billable-rate="
-                            project.billable_rate
-                        "
+                        v-model:billable-rate="project.billable_rate"
                         :currency="getOrganizationCurrencyString()"
                         @submit="submit"></ProjectEditBillableSection>
                 </div>

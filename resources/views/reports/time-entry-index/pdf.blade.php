@@ -1,6 +1,5 @@
 @use('Brick\Math\BigDecimal')
 @use('Brick\Money\Money')
-@use('PhpOffice\PhpSpreadsheet\Cell\DataType')
 @use('Carbon\CarbonInterval')
 @inject('interval', 'App\Service\IntervalService')
 <!DOCTYPE html>
@@ -141,12 +140,14 @@
             <div
                 style="font-size: 24px; font-weight: 500; margin-top: 2px;">{{ $localization->formatInterval(CarbonInterval::seconds($aggregatedData['seconds'])) }} </div>
         </div>
+        @if($showBillableRate)
         <div style="padding: 8px 12px; border-radius: 8px;">
             <div style="color: #71717a; font-weight: 600;">Total cost</div>
-            <div
-                style="font-size: 24px; font-weight: 500; margin-top: 2px;">{{ $localization->formatCurrency(Money::of(BigDecimal::ofUnscaledValue($aggregatedData['cost'], 2)->__toString(), $currency)) }} </div>
+            <div style="font-size: 24px; font-weight: 500; margin-top: 2px;">
+                {{ $localization->formatCurrency(Money::of(BigDecimal::ofUnscaledValue($aggregatedData['cost'], 2)->__toString(), $currency)) }}
+            </div>
         </div>
-
+        @endif
     </div>
     <div>
         <table style="width: 100%;">
@@ -185,7 +186,7 @@
                             {{ $localization->formatDate($timeEntry->start->timezone($timezone)) }} - <br> {{ $localization->formatDate($timeEntry->end->timezone($timezone)) }}
                         @endif
                         <br>
-                        {{ $localization->formatDate($timeEntry->start->timezone($timezone)) }} - {{ $localization->formatDate($timeEntry->end->timezone($timezone)) }}
+                        {{ $localization->formatTime($timeEntry->start->timezone($timezone)) }} - {{ $localization->formatTime($timeEntry->end->timezone($timezone)) }}
                     </td>
                     <td style="overflow-wrap: break-word; min-width: 75px;">
                         {{ $localization->formatInterval($timeEntry->getDuration()) }}

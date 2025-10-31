@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import VChart, { THEME_KEY } from 'vue-echarts';
-import { provide } from 'vue';
+import { provide, inject, type ComputedRef } from 'vue';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { PieChart } from 'echarts/charts';
@@ -11,19 +11,13 @@ import {
     TooltipComponent,
 } from 'echarts/components';
 import { formatHumanReadableDuration } from '@/packages/ui/src/utils/time';
-import { useCssVar } from "@vueuse/core";
+import { useCssVariable } from '@/utils/useCssVariable';
+import type { Organization } from '@/packages/api/src';
 
-use([
-    CanvasRenderer,
-    PieChart,
-    TitleComponent,
-    GridComponent,
-    TooltipComponent,
-    LegendComponent,
-]);
+use([CanvasRenderer, PieChart, TitleComponent, GridComponent, TooltipComponent, LegendComponent]);
 
 provide(THEME_KEY, 'dark');
-const labelColor = useCssVar('--color-text-secondary', null, { observe: true });
+const labelColor = useCssVariable('--color-text-secondary');
 
 const props = defineProps<{
     weeklyProjectOverview: {
@@ -32,6 +26,8 @@ const props = defineProps<{
         color: string;
     }[];
 }>();
+
+const organization = inject<ComputedRef<Organization>>('organization');
 
 const seriesData = props.weeklyProjectOverview.map((el) => {
     return {
@@ -69,7 +65,11 @@ const option = computed(() => ({
             },
             tooltip: {
                 valueFormatter: (value: number) => {
-                    return formatHumanReadableDuration(value);
+                    return formatHumanReadableDuration(
+                        value,
+                        organization?.value?.interval_format,
+                        organization?.value?.number_format
+                    );
                 },
             },
             data: seriesData,

@@ -25,9 +25,7 @@ const props = defineProps<{
 }>();
 
 const showCreateProjectModal = ref(false);
-async function createProject(
-    project: CreateProjectBody
-): Promise<Project | undefined> {
+async function createProject(project: CreateProjectBody): Promise<Project | undefined> {
     return await useProjectsStore().createProject(project);
 }
 
@@ -115,10 +113,7 @@ function handleSearch() {
     </div>
     <div class="flow-root max-w-[100vw] overflow-x-auto">
         <div class="inline-block min-w-full align-middle">
-            <div
-                data-testid="project_table"
-                class="grid min-w-full"
-                :style="gridTemplate">
+            <div data-testid="project_table" class="grid min-w-full" :style="gridTemplate">
                 <ProjectTableHeading
                     :show-billable-rate="
                         props.showBillableRate

@@ -83,10 +83,7 @@ export const useProjectsStore = defineStore('projects', () => {
         }
     }
 
-    async function updateProject(
-        projectId: string,
-        updateProjectBody: UpdateProjectBody
-    ) {
+    async function updateProject(projectId: string, updateProjectBody: UpdateProjectBody) {
         const organizationId = getCurrentOrganizationId();
         if (organizationId) {
             await handleApiRequestNotifications(
@@ -104,9 +101,7 @@ export const useProjectsStore = defineStore('projects', () => {
         }
     }
 
-    const projects = computed<Project[]>(
-        () => projectResponse.value?.data || []
-    );
+    const projects = computed<Project[]>(() => projectResponse.value?.data || []);
 
     return {
         projects,

@@ -1,18 +1,16 @@
 import { expect, Page } from '@playwright/test';
 import { PLAYWRIGHT_BASE_URL } from '../playwright/config';
 import { test } from '../playwright/fixtures';
-import { formatCents } from '../resources/js/packages/ui/src/utils/money';
+import { formatCentsWithOrganizationDefaults } from './utils/money';
+import type { CurrencyFormat } from '../resources/js/packages/ui/src/utils/money';
 
 async function goToProjectsOverview(page: Page) {
     await page.goto(PLAYWRIGHT_BASE_URL + '/projects');
 }
 
 // Create new project via modal
-test('test that creating and deleting a new project via the modal works', async ({
-    page,
-}) => {
-    const newProjectName =
-        'New Project ' + Math.floor(1 + Math.random() * 10000);
+test('test that creating and deleting a new project via the modal works', async ({ page }) => {
+    const newProjectName = 'New Project ' + Math.floor(1 + Math.random() * 10000);
     await goToProjectsOverview(page);
     await page.getByRole('button', { name: 'Create Project' }).click();
     await page.getByLabel('Project Name').fill(newProjectName);
@@ -30,16 +28,10 @@ test('test that creating and deleting a new project via the modal works', async 
         ),
     ]);
 
-    await expect(page.getByTestId('project_table')).toContainText(
-        newProjectName
-    );
-    const moreButton = page.locator(
-        "[aria-label='Actions for Project " + newProjectName + "']"
-    );
+    await expect(page.getByTestId('project_table')).toContainText(newProjectName);
+    const moreButton = page.locator("[aria-label='Actions for Project " + newProjectName + "']");
     moreButton.click();
-    const deleteButton = page.locator(
-        "[aria-label='Delete Project " + newProjectName + "']"
-    );
+    const deleteButton = page.locator("[aria-label='Delete Project " + newProjectName + "']");
 
     await Promise.all([
         deleteButton.click(),
@@ -50,14 +42,11 @@ test('test that creating and deleting a new project via the modal works', async 
                 response.status() === 204
         ),
     ]);
-    await expect(page.getByTestId('project_table')).not.toContainText(
-        newProjectName
-    );
+    await expect(page.getByTestId('project_table')).not.toContainText(newProjectName);
 });
 
 test('test that archiving and unarchiving projects works', async ({ page }) => {
-    const newProjectName =
-        'New Project ' + Math.floor(1 + Math.random() * 10000);
+    const newProjectName = 'New Project ' + Math.floor(1 + Math.random() * 10000);
     await goToProjectsOverview(page);
     await page.getByRole('button', { name: 'Create Project' }).click();
     await page.getByLabel('Project Name').fill(newProjectName);
@@ -86,11 +75,8 @@ test('test that archiving and unarchiving projects works', async ({ page }) => {
     ]);
 });
 
-test('test that updating billable rate works with existing time entries', async ({
-    page,
-}) => {
-    const newProjectName =
-        'New Project ' + Math.floor(1 + Math.random() * 10000);
+test('test that updating billable rate works with existing time entries', async ({ page }) => {
+    const newProjectName = 'New Project ' + Math.floor(1 + Math.random() * 10000);
     const newBillableRate = Math.round(Math.random() * 10000);
     await goToProjectsOverview(page);
     await page.getByRole('button', { name: 'Create Project' }).click();
@@ -101,17 +87,13 @@ test('test that updating billable rate works with existing time entries', async 
 
     await page.getByRole('row').first().getByRole('button').click();
     await page.getByRole('menuitem').getByText('Edit').first().click();
-        await page.getByText('Non-Billable').click();
+    await page.getByText('Non-Billable').click();
     await page.getByText('Custom Rate').click();
-    await page
-        .getByPlaceholder('Billable Rate')
-        .fill(newBillableRate.toString());
+    await page.getByPlaceholder('Billable Rate').fill(newBillableRate.toString());
     await page.getByRole('button', { name: 'Update Project' }).click();
 
     await Promise.all([
-        page
-            .getByRole('button', { name: 'Yes, update existing time entries' })
-            .click(),
+        page.locator('button').filter({ hasText: 'Yes, update existing time' }).click(),
         page.waitForRequest(
             async (request) =>
                 request.url().includes('/projects/') &&
@@ -123,15 +105,14 @@ test('test that updating billable rate works with existing time entries', async 
                 response.url().includes('/projects/') &&
                 response.request().method() === 'PUT' &&
                 response.status() === 200 &&
-                (await response.json()).data.billable_rate ===
-                    newBillableRate * 100
+                (await response.json()).data.billable_rate === newBillableRate * 100
         ),
     ]);
     await expect(
         page
             .getByRole('row')
             .first()
-            .getByText(formatCents(newBillableRate * 100, 'EUR'))
+            .getByText(formatCentsWithOrganizationDefaults(newBillableRate * 100))
     ).toBeVisible();
 });
 
