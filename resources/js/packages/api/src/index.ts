@@ -99,6 +99,11 @@ export type MyMembership = MyMemberships[0];
 
 export type OrganizationExportResponse = ZodiosResponseByAlias<SolidTimeApi, 'exportOrganization'>;
 
+export type UnlockRequestResponse = ZodiosResponseByAlias<SolidTimeApi, 'getUnlockRequests'>;
+export type UnlockRequest = UnlockRequestResponse['data'][0];
+
+export type CreateUnlockRequestBody = ZodiosBodyByAlias<SolidTimeApi, 'createUnlockRequest'>;
+
 export type ReportIndexResponse = ZodiosResponseByAlias<SolidTimeApi, 'getReports'>;
 
 export type CreateReportBody = ZodiosBodyByAlias<SolidTimeApi, 'createReport'>;

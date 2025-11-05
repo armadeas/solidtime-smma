@@ -35,12 +35,14 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  * @property int|null $billable_rate
  * @property string $user_id
  * @property bool $employees_can_see_billable_rates
+ * @property int|null $time_entry_lock_days
  * @property User $owner
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Collection<int, User> $users
  * @property Collection<int, User> $realUsers
  * @property-read Collection<int, OrganizationInvitation> $teamInvitations
+ * @property-read Collection<int, UnlockRequest> $unlockRequests
  * @property Member $membership
  * @property NumberFormat $number_format
  * @property CurrencyFormat $currency_format
@@ -49,6 +51,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  * @property TimeFormat $time_format
  *
  * @method HasMany<OrganizationInvitation, $this> teamInvitations()
+ * @method HasMany<UnlockRequest, $this> unlockRequests()
  * @method static OrganizationFactory factory()
  */
 class Organization extends JetstreamTeam implements AuditableContract
@@ -71,6 +74,7 @@ class Organization extends JetstreamTeam implements AuditableContract
         'currency' => 'string',
         'employees_can_see_billable_rates' => 'boolean',
         'prevent_overlapping_time_entries' => 'boolean',
+        'time_entry_lock_days' => 'integer',
         'number_format' => NumberFormat::class,
         'currency_format' => CurrencyFormat::class,
         'date_format' => DateFormat::class,
@@ -166,6 +170,14 @@ class Organization extends JetstreamTeam implements AuditableContract
     {
         return $this->users()
             ->where('is_placeholder', false);
+    }
+
+    /**
+     * @return HasMany<UnlockRequest, $this>
+     */
+    public function unlockRequests(): HasMany
+    {
+        return $this->hasMany(UnlockRequest::class);
     }
 
     /**

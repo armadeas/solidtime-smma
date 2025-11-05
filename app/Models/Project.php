@@ -38,6 +38,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  * @property-read Client|null $client
  * @property-read Collection<int, Task> $tasks
  * @property-read Collection<int, ProjectMember> $members
+ * @property-read Collection<int, UnlockRequest> $unlockRequests
  *
  * @method Builder<Project> visibleByEmployee(User $user)
  * @method static ProjectFactory factory()
@@ -174,6 +175,14 @@ class Project extends Model implements AuditableContract
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TimeEntry::class, 'project_id');
+    }
+
+    /**
+     * @return HasMany<UnlockRequest, $this>
+     */
+    public function unlockRequests(): HasMany
+    {
+        return $this->hasMany(UnlockRequest::class, 'project_id');
     }
 
     /**

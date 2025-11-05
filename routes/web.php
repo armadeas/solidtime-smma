@@ -74,6 +74,10 @@ Route::middleware([
         return Inertia::render('Tags');
     })->name('tags');
 
+    Route::get('/unlock-requests', function () {
+        return Inertia::render('UnlockRequests');
+    })->name('unlock-requests');
+
     Route::get('/import', function () {
         return Inertia::render('Import');
     })->name('import');

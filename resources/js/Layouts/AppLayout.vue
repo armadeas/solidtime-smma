@@ -12,6 +12,7 @@ import {
     CreditCardIcon,
     FolderIcon,
     HomeIcon,
+    LockOpenIcon,
     TagIcon,
     UserCircleIcon,
     UserGroupIcon,
@@ -200,6 +201,11 @@ const page = usePage<{
                                 :icon="TagIcon"
                                 :current="route().current('tags')"
                                 :href="route('tags')"></NavigationSidebarItem>
+                            <NavigationSidebarItem
+                                title="Unlock Requests"
+                                :icon="LockOpenIcon"
+                                :current="route().current('unlock-requests')"
+                                :href="route('unlock-requests')"></NavigationSidebarItem>
                             <NavigationSidebarItem
                                 v-if="isInvoicingActivated() && canViewInvoices()"
                                 title="Invoices"

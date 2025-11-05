@@ -99,6 +99,17 @@ class OrganizationResource extends Resource
                         'max:2147483647',
                     ])
                     ->numeric(),
+                Forms\Components\TextInput::make('time_entry_lock_days')
+                    ->label('Time Entry Lock Days')
+                    ->helperText('Number of days after which time entries cannot be modified. Leave empty to disable locking.')
+                    ->nullable()
+                    ->rules([
+                        'nullable',
+                        'integer',
+                        'min:0',
+                        'max:365',
+                    ])
+                    ->numeric(),
                 Forms\Components\DateTimePicker::make('created_at')
                     ->label('Created At')
                     ->hiddenOn(['create'])
@@ -126,6 +137,10 @@ class OrganizationResource extends Resource
                 Tables\Columns\TextColumn::make('currency'),
                 TextColumn::make('billable_rate')
                     ->money(fn (Organization $resource) => $resource->currency, divideBy: 100),
+                Tables\Columns\TextColumn::make('time_entry_lock_days')
+                    ->label('Lock Days')
+                    ->default('No lock')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
