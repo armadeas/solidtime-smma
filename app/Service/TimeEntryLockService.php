@@ -60,9 +60,24 @@ class TimeEntryLockService
     }
 
     /**
-     * Check if user can modify a time entry
+     * Get active unlock request for a project
      */
-    public function canModifyTimeEntry(TimeEntry $timeEntry, Member $member): bool
+    public function getActiveUnlock(Member $member, Project $project): ?UnlockRequest
+    {
+        return UnlockRequest::where('organization_id', $project->organization_id)
+            ->where('project_id', $project->id)
+            ->where('requester_member_id', $member->id)
+            ->where('status', UnlockRequestStatus::Approved)
+            ->where('expires_at', '>', now())
+            ->first();
+    }
+
+    /**
+     * Check if user can modify a time entry
+     * 
+     * @param array|null $newData New data untuk detect project change (optional)
+     */
+    public function canModifyTimeEntry(TimeEntry $timeEntry, Member $member, ?array $newData = null): bool
     {
         $organization = $timeEntry->organization;
 
@@ -71,9 +86,24 @@ class TimeEntryLockService
             return true;
         }
 
-        // If locked, check for active unlock request
+        // If locked, check for active unlock request for OLD project
         if ($timeEntry->project_id) {
-            return $this->hasActiveUnlock($member, $timeEntry->project);
+            $hasOldProjectUnlock = $this->hasActiveUnlock($member, $timeEntry->project);
+            
+            if (! $hasOldProjectUnlock) {
+                return false;
+            }
+            
+            // If project is being changed, also check unlock for NEW project
+            if ($newData && isset($newData['project_id']) && $newData['project_id'] !== $timeEntry->project_id) {
+                $newProject = Project::find($newData['project_id']);
+                
+                if ($newProject && $this->isTimeEntryLocked($timeEntry, $organization)) {
+                    return $this->hasActiveUnlock($member, $newProject);
+                }
+            }
+            
+            return true;
         }
 
         return false;

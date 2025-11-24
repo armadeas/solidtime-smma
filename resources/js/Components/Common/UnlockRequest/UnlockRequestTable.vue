@@ -6,6 +6,12 @@ import UnlockRequestTableHeading from '@/Components/Common/UnlockRequest/UnlockR
 import UnlockRequestCreateModal from '@/Components/Common/UnlockRequest/UnlockRequestCreateModal.vue';
 import SecondaryButton from '@/packages/ui/src/Buttons/SecondaryButton.vue';
 import { useUnlockRequestsStore } from '@/utils/useUnlockRequests';
+import { storeToRefs } from 'pinia';
+import { useProjectsStore } from '@/utils/useProjects';
+import { useTasksStore } from '@/utils/useTasks';
+import { useClientsStore } from '@/utils/useClients';
+import type { CreateClientBody, CreateProjectBody, Project, Client } from '@/packages/api/src';
+import { isAllowedToPerformPremiumAction } from '@/utils/billing';
 
 const props = defineProps<{
     unlockRequests: any[];
@@ -14,8 +20,20 @@ const props = defineProps<{
 
 const showCreateModal = ref(false);
 
+const { projects } = storeToRefs(useProjectsStore());
+const { tasks } = storeToRefs(useTasksStore());
+const { clients } = storeToRefs(useClientsStore());
+
 async function createUnlockRequest(data: any) {
     return await useUnlockRequestsStore().createUnlockRequest(data);
+}
+
+async function createProject(project: CreateProjectBody): Promise<Project | undefined> {
+    return await useProjectsStore().createProject(project);
+}
+
+async function createClient(body: CreateClientBody): Promise<Client | undefined> {
+    return await useClientsStore().createClient(body);
 }
 </script>
 
@@ -23,6 +41,11 @@ async function createUnlockRequest(data: any) {
     <UnlockRequestCreateModal
         v-model:show="showCreateModal"
         :create-unlock-request="createUnlockRequest"
+        :create-project="createProject"
+        :create-client="createClient"
+        :clients="clients"
+        :tasks="tasks"
+        :enable-estimated-time="isAllowedToPerformPremiumAction()"
     />
     <div class="flow-root">
         <div class="inline-block min-w-full align-middle">

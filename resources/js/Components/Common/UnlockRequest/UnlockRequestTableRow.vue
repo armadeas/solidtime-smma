@@ -88,14 +88,14 @@ async function deleteRequest() {
         <!-- Project -->
         <div class="py-4 pr-3 text-sm text-text-primary pl-4 sm:pl-6 lg:pl-8 3xl:pl-12">
             <div class="font-medium break-words">{{ unlockRequest.project?.name ?? 'N/A' }}</div>
-            <div v-if="unlockRequest.reason" class="text-xs text-text-tertiary mt-1 break-words max-w-md">
-                {{ unlockRequest.reason }}
+            <div v-if="unlockRequest.project?.client" class="text-xs text-text-tertiary mt-1 break-words">
+                Client: {{ unlockRequest.project.client.name }}
             </div>
         </div>
 
-        <!-- Client -->
-        <div class="py-4 pr-3 text-sm text-text-primary break-words">
-            {{ unlockRequest.project?.client?.name ?? '-' }}
+        <!-- Reason -->
+        <div class="py-4 pr-3 text-sm text-text-tertiary break-words max-w-md">
+            {{ unlockRequest.reason ?? '-' }}
         </div>
 
         <!-- Requester -->

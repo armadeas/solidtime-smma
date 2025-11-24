@@ -12,7 +12,11 @@ import UnlockRequestCreateModal from '@/Components/Common/UnlockRequest/UnlockRe
 import { useUnlockRequestsStore } from '@/utils/useUnlockRequests';
 import { storeToRefs } from 'pinia';
 import { getCurrentRole } from '@/utils/useUser';
-import type { CreateUnlockRequestBody, UnlockRequest } from '@/packages/api/src';
+import type { CreateUnlockRequestBody, UnlockRequest, CreateClientBody, CreateProjectBody, Project, Client } from '@/packages/api/src';
+import { useProjectsStore } from '@/utils/useProjects';
+import { useTasksStore } from '@/utils/useTasks';
+import { useClientsStore } from '@/utils/useClients';
+import { isAllowedToPerformPremiumAction } from '@/utils/billing';
 
 onMounted(() => {
     useUnlockRequestsStore().fetchUnlockRequests();
@@ -22,6 +26,9 @@ const showCreateModal = ref(false);
 const activeTab = ref<'all' | 'my_requests' | 'pending_approvals'>('all');
 
 const { unlockRequests } = storeToRefs(useUnlockRequestsStore());
+const { projects } = storeToRefs(useProjectsStore());
+const { tasks } = storeToRefs(useTasksStore());
+const { clients } = storeToRefs(useClientsStore());
 
 const isManager = computed(() => {
     const role = getCurrentRole();
@@ -40,6 +47,14 @@ const filteredUnlockRequests = computed(() => {
 
 async function createUnlockRequest(data: CreateUnlockRequestBody): Promise<UnlockRequest | undefined> {
     return await useUnlockRequestsStore().createUnlockRequest(data);
+}
+
+async function createProject(project: CreateProjectBody): Promise<Project | undefined> {
+    return await useProjectsStore().createProject(project);
+}
+
+async function createClient(body: CreateClientBody): Promise<Client | undefined> {
+    return await useClientsStore().createClient(body);
 }
 
 function handleTabChange(tab: 'all' | 'my_requests' | 'pending_approvals') {
@@ -76,6 +91,11 @@ function handleTabChange(tab: 'all' | 'my_requests' | 'pending_approvals') {
             <UnlockRequestCreateModal
                 v-model:show="showCreateModal"
                 :create-unlock-request="createUnlockRequest"
+                :create-project="createProject"
+                :create-client="createClient"
+                :clients="clients"
+                :tasks="tasks"
+                :enable-estimated-time="isAllowedToPerformPremiumAction()"
             />
         </MainContainer>
         <UnlockRequestTable

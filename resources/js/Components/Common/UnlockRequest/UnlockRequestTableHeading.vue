@@ -12,7 +12,7 @@ defineProps<{
             Project
         </div>
         <div class="px-3 py-1.5 text-left font-semibold text-text-primary">
-            Client
+            Reason
         </div>
         <div class="px-3 py-1.5 text-left font-semibold text-text-primary">
             Requester

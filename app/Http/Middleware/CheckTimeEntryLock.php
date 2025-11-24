@@ -119,9 +119,31 @@ class CheckTimeEntryLock
 
     private function handleUpdateTimeEntry(Request $request, TimeEntry $timeEntry, Organization $organization, Member $member, Closure $next): Response
     {
-        // Check if the time entry can be modified
-        if (! $this->lockService->canModifyTimeEntry($timeEntry, $member)) {
-            return $this->lockedResponse($organization);
+        $isLocked = $this->lockService->isTimeEntryLocked($timeEntry, $organization);
+        $isProjectChanging = $request->has('project_id') && $request->input('project_id') !== $timeEntry->project_id;
+        
+        // If entry is locked and project is changing, need dual unlock
+        if ($isLocked && $isProjectChanging) {
+            $oldProject = $timeEntry->project;
+            $newProjectId = $request->input('project_id');
+            $newProject = $newProjectId ? \App\Models\Project::find($newProjectId) : null;
+            
+            if (! $oldProject || ! $newProject) {
+                return $this->lockedResponse($organization);
+            }
+            
+            $hasOldUnlock = $this->lockService->hasActiveUnlock($member, $oldProject);
+            $hasNewUnlock = $this->lockService->hasActiveUnlock($member, $newProject);
+            
+            if (! $hasOldUnlock || ! $hasNewUnlock) {
+                return $this->dualUnlockRequiredResponse($organization, $oldProject, $newProject, $hasOldUnlock, $hasNewUnlock);
+            }
+        }
+        // Normal locked entry check (not changing project)
+        elseif ($isLocked) {
+            if (! $this->lockService->canModifyTimeEntry($timeEntry, $member)) {
+                return $this->lockedResponse($organization);
+            }
         }
 
         // If updating the start time, check the new date
@@ -129,7 +151,9 @@ class CheckTimeEntryLock
             $newStartDate = \Illuminate\Support\Carbon::parse($request->input('start'));
 
             if ($this->lockService->isDateLocked($newStartDate, $organization)) {
-                $project = $timeEntry->project;
+                $project = $request->has('project_id') 
+                    ? \App\Models\Project::find($request->input('project_id'))
+                    : $timeEntry->project;
 
                 if (! $project || ! $this->lockService->hasActiveUnlock($member, $project)) {
                     return $this->lockedResponse($organization);
@@ -191,6 +215,52 @@ class CheckTimeEntryLock
             'message' => 'This time entry is locked. You need to request unlock permission from a project manager.',
             'locked' => true,
             'lock_cutoff_date' => $cutoffDate?->toIso8601String(),
+        ], Response::HTTP_FORBIDDEN);
+    }
+
+    private function dualUnlockRequiredResponse(
+        Organization $organization, 
+        \App\Models\Project $oldProject, 
+        \App\Models\Project $newProject,
+        bool $hasOldUnlock,
+        bool $hasNewUnlock
+    ): Response
+    {
+        $cutoffDate = $this->lockService->getLockCutoffDate($organization);
+        $missingUnlocks = [];
+        
+        if (! $hasOldUnlock) {
+            $missingUnlocks[] = [
+                'project_id' => $oldProject->id,
+                'project_name' => $oldProject->name,
+                'reason' => 'old_project'
+            ];
+        }
+        
+        if (! $hasNewUnlock) {
+            $missingUnlocks[] = [
+                'project_id' => $newProject->id,
+                'project_name' => $newProject->name,
+                'reason' => 'new_project'
+            ];
+        }
+
+        return response()->json([
+            'message' => 'Changing project requires unlock permission for both old and new projects.',
+            'locked' => true,
+            'requires_dual_unlock' => true,
+            'lock_cutoff_date' => $cutoffDate?->toIso8601String(),
+            'missing_unlocks' => $missingUnlocks,
+            'old_project' => [
+                'id' => $oldProject->id,
+                'name' => $oldProject->name,
+                'has_unlock' => $hasOldUnlock,
+            ],
+            'new_project' => [
+                'id' => $newProject->id,
+                'name' => $newProject->name,
+                'has_unlock' => $hasNewUnlock,
+            ],
         ], Response::HTTP_FORBIDDEN);
     }
 }
