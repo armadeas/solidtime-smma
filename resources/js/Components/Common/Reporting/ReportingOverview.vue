@@ -93,11 +93,11 @@ function getFilterAttributes(): AggregatedTimeEntriesQueryParams {
     };
     params = {
         ...params,
-        member_ids: selectedMembers.value.length > 0 ? selectedMembers.value : undefined,
-        project_ids: selectedProjects.value.length > 0 ? selectedProjects.value : undefined,
-        task_ids: selectedTasks.value.length > 0 ? selectedTasks.value : undefined,
-        client_ids: selectedClients.value.length > 0 ? selectedClients.value : undefined,
-        tag_ids: selectedTags.value.length > 0 ? selectedTags.value : undefined,
+        'member_ids[]': selectedMembers.value.length > 0 ? selectedMembers.value : undefined,
+        'project_ids[]': selectedProjects.value.length > 0 ? selectedProjects.value : undefined,
+        'task_ids[]': selectedTasks.value.length > 0 ? selectedTasks.value : undefined,
+        'client_ids[]': selectedClients.value.length > 0 ? selectedClients.value : undefined,
+        'tag_ids[]': selectedTags.value.length > 0 ? selectedTags.value : undefined,
         billable: billable.value !== null ? billable.value : undefined,
         member_id: getCurrentRole() === 'employee' ? getCurrentMembershipId() : undefined,
         rounding_type: roundingEnabled.value ? roundingType.value : undefined,
@@ -366,7 +366,7 @@ const tableData = computed(() => {
             </div>
         </MainContainer>
     </div>
-    <MainContainer>
+    <MainContainer v-if="aggregatedGraphTimeEntries">
         <div class="pt-10 w-full px-3 relative">
             <ReportingChart
                 :grouped-type="aggregatedGraphTimeEntries?.grouped_type"
@@ -405,7 +405,6 @@ const tableData = computed(() => {
                             v-for="entry in tableData"
                             :key="entry.description ?? 'none'"
                             :currency="getOrganizationCurrencyString()"
-                            :type="aggregatedTableTimeEntries.grouped_type"
                             :entry="entry"></ReportingRow>
                         <div class="contents [&>*]:transition text-text-tertiary [&>*]:h-[50px]">
                             <div class="flex items-center pl-6 font-medium">

@@ -217,7 +217,6 @@ onMounted(async () => {
                                 v-for="entry in tableData"
                                 :key="entry.description ?? 'none'"
                                 :currency="reportCurrency"
-                                :currency-format="reportCurrencyFormat"
                                 :entry="entry"></ReportingRow>
                             <div
                                 class="contents [&>*]:transition text-text-tertiary [&>*]:h-[50px]">

@@ -78,11 +78,14 @@ const switchToTeam = (organization: Organization) => {
                     <Link href="/billing" class="inline-flex items-center w-full"> Billing </Link>
                 </DropdownMenuItem>
 
-                <DropdownLink
-                    v-if="page.props.jetstream.canCreateTeams && page.props.auth.user.email == 'ketikdeas@gmail.com'"
-                    :href="route('teams.create')">
-                    Create new organization
-                </DropdownLink>
+                <DropdownMenuItem v-if="page.props.jetstream.canCreateTeams && page.props.auth.user.email == 'ketikdeas@gmail.com" as-child>
+                    <Link
+                        :href="route('teams.create')"
+                        class="inline-flex items-center gap-2.5 w-full">
+                        <PlusCircleIcon class="w-5 h-5 text-icon-default" />
+                        <span>Create new organization</span>
+                    </Link>
+                </DropdownMenuItem>
 
                 <template v-if="page.props.auth.user.all_teams.length > 1">
                     <div class="border-t border-card-background-separator" />
