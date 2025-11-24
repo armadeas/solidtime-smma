@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import TableRow from '@/Components/TableRow.vue';
 import { useUnlockRequestsStore } from '@/utils/useUnlockRequests';
-import { CheckCircleIcon, XCircleIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { CheckCircleIcon, XCircleIcon, TrashIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline';
 import { formatDateTime } from '@/utils/format';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import UnlockRequestAuditModal from './UnlockRequestAuditModal.vue';
 
 interface UnlockRequest {
     id: string;
@@ -53,11 +54,11 @@ const isExpired = computed(() => props.unlockRequest.status === 'expired');
 const isRejected = computed(() => props.unlockRequest.status === 'rejected');
 
 const statusColor = computed(() => {
-    if (isPending.value) return 'text-yellow-600 bg-yellow-50';
-    if (isApproved.value) return 'text-green-600 bg-green-50';
-    if (isRejected.value) return 'text-red-600 bg-red-50';
-    if (isExpired.value) return 'text-gray-600 bg-gray-50';
-    return 'text-gray-600 bg-gray-50';
+    if (isPending.value) return 'text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-900/20';
+    if (isApproved.value) return 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20';
+    if (isRejected.value) return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20';
+    if (isExpired.value) return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20';
+    return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20';
 });
 
 const statusText = computed(() => {
@@ -81,6 +82,8 @@ async function deleteRequest() {
         await useUnlockRequestsStore().deleteUnlockRequest(props.unlockRequest.id);
     }
 }
+
+const showAuditModal = ref(false);
 </script>
 
 <template>
@@ -128,11 +131,20 @@ async function deleteRequest() {
         <!-- Actions -->
         <div class="relative py-4 pr-4 sm:pr-6 lg:pr-8 3xl:pr-12 text-right text-sm font-medium">
             <div class="flex items-center justify-end space-x-2">
+                <!-- View Audit Button (for approved/expired requests) -->
+                <button
+                    v-if="isApproved || isExpired"
+                    @click="showAuditModal = true"
+                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                    title="View Audit Logs">
+                    <ClipboardDocumentListIcon class="h-5 w-5" />
+                </button>
+
                 <!-- Approve Button (for managers on pending requests) -->
                 <button
                     v-if="isManager && isPending"
                     @click="approveRequest"
-                    class="text-green-600 hover:text-green-900 p-1.5 rounded hover:bg-green-50 transition-colors"
+                    class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                     title="Approve">
                     <CheckCircleIcon class="h-5 w-5" />
                 </button>
@@ -141,7 +153,7 @@ async function deleteRequest() {
                 <button
                     v-if="isManager && isPending"
                     @click="rejectRequest"
-                    class="text-red-600 hover:text-red-900 p-1.5 rounded hover:bg-red-50 transition-colors"
+                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     title="Reject">
                     <XCircleIcon class="h-5 w-5" />
                 </button>
@@ -150,12 +162,18 @@ async function deleteRequest() {
                 <button
                     v-if="isPending"
                     @click="deleteRequest"
-                    class="text-gray-600 hover:text-gray-900 p-1.5 rounded hover:bg-gray-50 transition-colors"
+                    class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 p-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-900/20 transition-colors"
                     title="Delete">
                     <TrashIcon class="h-5 w-5" />
                 </button>
             </div>
         </div>
     </TableRow>
+
+    <!-- Audit Modal -->
+    <UnlockRequestAuditModal
+        v-model:show="showAuditModal"
+        :unlock-request-id="unlockRequest.id"
+    />
 </template>
 

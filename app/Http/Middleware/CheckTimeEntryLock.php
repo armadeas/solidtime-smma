@@ -109,9 +109,17 @@ class CheckTimeEntryLock
             // Check if user has active unlock for this project
             $project = $projectId ? \App\Models\Project::find($projectId) : null;
 
-            if (! $project || ! $this->lockService->hasActiveUnlock($member, $project)) {
+            if (! $project) {
                 return $this->lockedResponse($organization);
             }
+            
+            $unlock = $this->lockService->getActiveUnlock($member, $project);
+            if (! $unlock) {
+                return $this->lockedResponse($organization);
+            }
+            
+            // Set unlock context for audit
+            $this->lockService->setUnlockContext($unlock->id);
         }
 
         return $next($request);
@@ -132,17 +140,28 @@ class CheckTimeEntryLock
                 return $this->lockedResponse($organization);
             }
             
-            $hasOldUnlock = $this->lockService->hasActiveUnlock($member, $oldProject);
-            $hasNewUnlock = $this->lockService->hasActiveUnlock($member, $newProject);
+            $oldUnlock = $this->lockService->getActiveUnlock($member, $oldProject);
+            $newUnlock = $this->lockService->getActiveUnlock($member, $newProject);
             
-            if (! $hasOldUnlock || ! $hasNewUnlock) {
-                return $this->dualUnlockRequiredResponse($organization, $oldProject, $newProject, $hasOldUnlock, $hasNewUnlock);
+            if (! $oldUnlock || ! $newUnlock) {
+                return $this->dualUnlockRequiredResponse($organization, $oldProject, $newProject, (bool) $oldUnlock, (bool) $newUnlock);
             }
+            
+            // Set unlock context for audit (use old project unlock by default)
+            $this->lockService->setUnlockContext($oldUnlock->id);
         }
         // Normal locked entry check (not changing project)
         elseif ($isLocked) {
             if (! $this->lockService->canModifyTimeEntry($timeEntry, $member)) {
                 return $this->lockedResponse($organization);
+            }
+            
+            // Set unlock context for audit if unlock is used
+            if ($timeEntry->project_id) {
+                $unlock = $this->lockService->getActiveUnlock($member, $timeEntry->project);
+                if ($unlock) {
+                    $this->lockService->setUnlockContext($unlock->id);
+                }
             }
         }
 
@@ -155,9 +174,17 @@ class CheckTimeEntryLock
                     ? \App\Models\Project::find($request->input('project_id'))
                     : $timeEntry->project;
 
-                if (! $project || ! $this->lockService->hasActiveUnlock($member, $project)) {
+                if (! $project) {
                     return $this->lockedResponse($organization);
                 }
+                
+                $unlock = $this->lockService->getActiveUnlock($member, $project);
+                if (! $unlock) {
+                    return $this->lockedResponse($organization);
+                }
+                
+                // Set unlock context for audit
+                $this->lockService->setUnlockContext($unlock->id);
             }
         }
 
@@ -168,6 +195,14 @@ class CheckTimeEntryLock
     {
         if (! $this->lockService->canModifyTimeEntry($timeEntry, $member)) {
             return $this->lockedResponse($organization);
+        }
+
+        // Set unlock context for audit if unlock is used
+        if ($this->lockService->isTimeEntryLocked($timeEntry, $organization) && $timeEntry->project_id) {
+            $unlock = $this->lockService->getActiveUnlock($member, $timeEntry->project);
+            if ($unlock) {
+                $this->lockService->setUnlockContext($unlock->id);
+            }
         }
 
         return $next($request);

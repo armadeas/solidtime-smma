@@ -90,6 +90,12 @@ class UnlockRequestResource extends BaseResource
             'created_at' => $this->resource->created_at->toISOString(),
             /** @var string $updated_at Timestamp when request was last updated */
             'updated_at' => $this->resource->updated_at->toISOString(),
+            /** @var array|null $unlock_audits Audit logs created using this unlock request */
+            'unlock_audits' => $this->whenLoaded('unlockAudits', function () {
+                return \App\Http\Resources\V1\Audit\AuditResource::collection($this->resource->unlockAudits);
+            }),
+            /** @var int|null $unlock_audits_count Count of unlock audit logs */
+            'unlock_audits_count' => $this->whenCounted('unlockAudits'),
         ];
     }
 }

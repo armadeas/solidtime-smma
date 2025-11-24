@@ -73,6 +73,25 @@ class TimeEntryLockService
     }
 
     /**
+     * Set unlock request context for current request
+     * This will be used to inject unlock_request_id into audit logs
+     */
+    public function setUnlockContext(?string $unlockRequestId): void
+    {
+        if ($unlockRequestId) {
+            request()->merge(['_unlock_request_id' => $unlockRequestId]);
+        }
+    }
+
+    /**
+     * Get unlock request ID from current request context
+     */
+    public function getUnlockContext(): ?string
+    {
+        return request()->get('_unlock_request_id');
+    }
+
+    /**
      * Check if user can modify a time entry
      * 
      * @param array|null $newData New data untuk detect project change (optional)

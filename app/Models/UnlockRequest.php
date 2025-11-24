@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UnlockRequestStatus;
+use App\Models\Concerns\CustomAuditable;
 use App\Models\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
  * @property string $id
@@ -33,8 +36,9 @@ use Illuminate\Support\Carbon;
  * @method static Builder pending()
  * @method static Builder active()
  */
-class UnlockRequest extends Model
+class UnlockRequest extends Model implements AuditableContract
 {
+    use CustomAuditable;
     use HasUuids;
 
     protected $fillable = [
@@ -86,6 +90,17 @@ class UnlockRequest extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'approver_member_id');
+    }
+
+    /**
+     * Get all audits that were created using this unlock request
+     * (Different from the audits() method from Auditable trait which tracks changes to this model)
+     *
+     * @return HasMany<Audit>
+     */
+    public function unlockAudits(): HasMany
+    {
+        return $this->hasMany(Audit::class, 'unlock_request_id');
     }
 
     /**

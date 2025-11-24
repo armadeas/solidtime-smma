@@ -117,6 +117,19 @@ class TimeEntry extends Model implements AuditableContract
         'billable_rate',
     ];
 
+    /**
+     * Transform audit data to include unlock_request_id if present
+     */
+    public function transformAudit(array $data): array
+    {
+        // Inject unlock_request_id if present in request context
+        if ($unlockRequestId = request()->get('_unlock_request_id')) {
+            $data['unlock_request_id'] = $unlockRequestId;
+        }
+
+        return $data;
+    }
+
     public function getBillableRateComputed(): ?int
     {
         return app(BillableRateService::class)->getBillableRateForTimeEntry($this);

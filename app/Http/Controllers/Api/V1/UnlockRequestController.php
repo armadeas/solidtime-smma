@@ -107,7 +107,16 @@ class UnlockRequestController extends Controller
 
         $this->authorize('view', $unlockRequest);
 
-        $unlockRequest->load(['project.client', 'requester.user', 'approver.user']);
+        $unlockRequest->load([
+            'project.client', 
+            'requester.user', 
+            'approver.user',
+            'unlockAudits' => function ($query) {
+                $query->with(['user', 'unlockRequest.project'])
+                    ->orderBy('created_at', 'desc');
+            }
+        ]);
+        $unlockRequest->loadCount('unlockAudits');
 
         return new UnlockRequestResource($unlockRequest);
     }

@@ -15,6 +15,7 @@ use App\Models\ProjectMember;
 use App\Models\Tag;
 use App\Models\Task;
 use App\Models\TimeEntry;
+use App\Models\UnlockRequest;
 use App\Models\User;
 use App\Service\BillingContract;
 use App\Service\IpLookup\IpLookupServiceContract;
@@ -67,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
             'tag' => Tag::class,
             'task' => Task::class,
             'time-entry' => TimeEntry::class,
+            'unlock-request' => UnlockRequest::class,
             'user' => User::class,
         ]);
         Model::unguard();
