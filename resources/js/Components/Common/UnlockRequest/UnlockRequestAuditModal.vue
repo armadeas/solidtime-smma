@@ -36,7 +36,9 @@ watch(show, async (newValue) => {
                 }
             });
             unlockRequest.value = response.data;
-            audits.value = response.data.unlock_audits || [];
+            audits.value = Array.isArray(response.data.unlock_audits) 
+                ? response.data.unlock_audits 
+                : [];
         } catch (error) {
             console.error('Failed to load audit logs:', error);
         } finally {
