@@ -125,7 +125,7 @@ export function useTimeEntriesMutations() {
                     () =>
                         api.deleteTimeEntries(undefined, {
                             queries: {
-                                ids: timeEntryIds,
+                                'ids[]': timeEntryIds,
                             },
                             params: {
                                 organization: organizationId,
