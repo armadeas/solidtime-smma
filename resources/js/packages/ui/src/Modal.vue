@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Dialog, DialogContent, DialogFooter } from '@/Components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter } from './dialog/index';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -39,7 +39,7 @@ const maxWidthClass = computed(() => {
 <template>
     <Dialog :open="show" @update:open="close">
         <DialogContent :class="maxWidthClass">
-            <div>
+            <div class="min-w-0">
                 <slot />
             </div>
 

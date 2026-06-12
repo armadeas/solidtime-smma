@@ -1,49 +1,13 @@
 import { defineStore } from 'pinia';
 import { api } from '@/packages/api/src';
-import { computed, ref } from 'vue';
-import type {
-    CreateProjectBody,
-    Project,
-    ProjectResponse,
-    UpdateProjectBody,
-} from '@/packages/api/src';
+import type { CreateProjectBody, UpdateProjectBody } from '@/packages/api/src';
 import { getCurrentOrganizationId } from '@/utils/useUser';
 import { useNotificationsStore } from '@/utils/notification';
+import { useQueryClient } from '@tanstack/vue-query';
 
 export const useProjectsStore = defineStore('projects', () => {
-    const projectResponse = ref<ProjectResponse | null>(null);
     const { handleApiRequestNotifications } = useNotificationsStore();
-    async function fetchProjects(
-        search?: string,
-        order?: 'asc' | 'desc',
-        clients?: string[],
-        members?: string[]
-    ) {
-        const organization = getCurrentOrganizationId();
-        if (organization) {
-            projectResponse.value = await handleApiRequestNotifications(
-                () =>
-                    api.getProjects({
-                        params: {
-                            organization: organization,
-                        },
-                        queries: {
-                            archived: 'all',
-                            ...(search ? { search: search } : {}),
-                            ...(order ? { order } : {}),
-                            ...(clients && clients.length > 0
-                                ? { clients: clients }
-                                : {}),
-                            ...(members && members.length > 0
-                                ? { members: members }
-                                : {}),
-                        },
-                    }),
-                undefined,
-                'Failed to fetch projects'
-            );
-        }
-    }
+    const queryClient = useQueryClient();
 
     async function createProject(projectBody: CreateProjectBody) {
         const organization = getCurrentOrganizationId();
@@ -60,7 +24,7 @@ export const useProjectsStore = defineStore('projects', () => {
                 'Failed to create project'
             );
 
-            await fetchProjects();
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
             return response['data'];
         }
     }
@@ -79,7 +43,7 @@ export const useProjectsStore = defineStore('projects', () => {
                 'Project deleted successfully',
                 'Failed to delete project'
             );
-            await fetchProjects();
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
         }
     }
 
@@ -97,15 +61,11 @@ export const useProjectsStore = defineStore('projects', () => {
                 'Project updated successfully',
                 'Failed to update project'
             );
-            await fetchProjects();
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
         }
     }
 
-    const projects = computed<Project[]>(() => projectResponse.value?.data || []);
-
     return {
-        projects,
-        fetchProjects,
         createProject,
         deleteProject,
         updateProject,

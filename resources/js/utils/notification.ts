@@ -57,6 +57,13 @@ export const useNotificationsStore = defineStore('notifications', () => {
                         'organization_has_no_subscription_but_multiple_members'
                     ) {
                         showActionBlockedModal.value = true;
+                    } else if (error?.response?.data?.key === 'overlapping_time_entry') {
+                        addNotification(
+                            'error',
+                            'Overlapping time entries are not allowed',
+                            error.response?.data?.message ??
+                                'This change would overlap with an existing time entry.'
+                        );
                     } else {
                         addNotification(
                             'error',
@@ -81,7 +88,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
                         }
                         return response;
                     } catch {
-                        router.get(route('login'));
+                        router.get('/login');
                     }
                 } else {
                     addNotification('error', 'The action failed. Please try again later.');

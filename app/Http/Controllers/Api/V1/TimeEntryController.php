@@ -55,6 +55,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 
@@ -286,7 +287,7 @@ class TimeEntryController extends Controller
             'user',
             'tagsRelation',
         ]);
-        $filename = 'time-entries-export-'.now()->format('Y-m-d_H-i-s').'.'.$format->getFileExtension();
+        $filename = 'time-entries-export-'.now()->format('Y-m-d_H-i-s').'-'.Str::uuid().'.'.$format->getFileExtension();
         $folderPath = 'exports';
         $path = $folderPath.'/'.$filename;
         $localizationService = LocalizationService::forOrganization($organization);
@@ -519,7 +520,7 @@ class TimeEntryController extends Controller
         $timezone = app(TimezoneService::class)->getTimezoneFromUser($this->user());
         $localizationService = LocalizationService::forOrganization($organization);
 
-        $filename = 'time-entries-report-'.now()->format('Y-m-d_H-i-s').'.'.$format->getFileExtension();
+        $filename = 'time-entries-report-'.now()->format('Y-m-d_H-i-s').'-'.Str::uuid().'.'.$format->getFileExtension();
         $folderPath = 'exports';
         $path = $folderPath.'/'.$filename;
 
@@ -678,9 +679,9 @@ class TimeEntryController extends Controller
         /** @var Member|null $member */
         $member = $request->has('member_id') ? Member::query()->findOrFail($request->input('member_id')) : null;
         if ($timeEntry->member->user_id === Auth::id() && ($member === null || $member->user_id === Auth::id())) {
-            $this->checkPermission($organization, 'time-entries:update:own');
+            $this->checkPermission($organization, 'time-entries:update:own', $timeEntry);
         } else {
-            $this->checkPermission($organization, 'time-entries:update:all');
+            $this->checkPermission($organization, 'time-entries:update:all', $timeEntry);
         }
 
         if ($timeEntry->end !== null && $request->has('end') && $request->input('end') === null) {

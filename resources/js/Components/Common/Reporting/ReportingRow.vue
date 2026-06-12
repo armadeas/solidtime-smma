@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatHumanReadableDuration } from '@/packages/ui/src/utils/time';
+import { formatReportingDuration } from '@/packages/ui/src/utils/time';
 import { formatCents } from '@/packages/ui/src/utils/money';
 import GroupedItemsCountButton from '@/packages/ui/src/GroupedItemsCountButton.vue';
 import { ref, inject, type ComputedRef } from 'vue';
@@ -20,6 +20,7 @@ const props = defineProps<{
     entry: AggregatedGroupedData;
     indent?: boolean;
     currency: string;
+    showCost?: boolean;
 }>();
 
 const expanded = ref(false);
@@ -41,16 +42,16 @@ const organization = inject<ComputedRef<Organization>>('organization');
                 {{ entry.description }}
             </span>
         </div>
-        <div class="justify-end flex items-center">
+        <div class="justify-end flex items-center" :class="!showCost ? 'pr-6' : ''">
             {{
-                formatHumanReadableDuration(
+                formatReportingDuration(
                     entry.seconds,
                     organization?.interval_format,
                     organization?.number_format
                 )
             }}
         </div>
-        <div class="justify-end pr-6 flex items-center">
+        <div v-if="showCost" class="justify-end pr-6 flex items-center">
             {{
                 entry.cost
                     ? formatCents(
@@ -66,12 +67,14 @@ const organization = inject<ComputedRef<Organization>>('organization');
     </div>
     <div
         v-if="expanded && entry.grouped_data"
-        class="col-span-3 grid bg-quaternary"
-        style="grid-template-columns: 1fr 150px 230px">
+        :class="showCost ? 'col-span-3' : 'col-span-2'"
+        class="grid bg-tertiary"
+        :style="`grid-template-columns: 1fr 150px ${showCost ? '150px' : ''}`">
         <ReportingRow
             v-for="subEntry in entry.grouped_data"
             :key="subEntry.description ?? 'none'"
             :currency="props.currency"
+            :show-cost="showCost"
             indent
             :entry="subEntry"></ReportingRow>
     </div>

@@ -94,8 +94,11 @@ class JetstreamServiceProvider extends ServiceProvider
             'tasks:view',
             'tasks:view:all',
             'tasks:create',
+            'tasks:create:all',
             'tasks:update',
+            'tasks:update:all',
             'tasks:delete',
+            'tasks:delete:all',
             'time-entries:view:all',
             'time-entries:create:all',
             'time-entries:update:all',
@@ -158,8 +161,11 @@ class JetstreamServiceProvider extends ServiceProvider
             'tasks:view',
             'tasks:view:all',
             'tasks:create',
+            'tasks:create:all',
             'tasks:update',
+            'tasks:update:all',
             'tasks:delete',
+            'tasks:delete:all',
             'time-entries:view:all',
             'time-entries:create:all',
             'time-entries:update:all',
@@ -219,8 +225,11 @@ class JetstreamServiceProvider extends ServiceProvider
             'tasks:view',
             'tasks:view:all',
             'tasks:create',
+            'tasks:create:all',
             'tasks:update',
+            'tasks:update:all',
             'tasks:delete',
+            'tasks:delete:all',
             'time-entries:view:all',
             'time-entries:create:all',
             'time-entries:update:all',
@@ -296,28 +305,8 @@ class JetstreamServiceProvider extends ServiceProvider
                             'owner' => [
                                 'id' => $owner->getKey(),
                                 'name' => $owner->name,
-                                'email' => $owner->email,
                                 'profile_photo_url' => $owner->profile_photo_url,
                             ],
-                            'users' => $teamModel->users->map(function (User $user): array {
-                                return [
-                                    'id' => $user->getKey(),
-                                    'name' => $user->name,
-                                    'email' => $user->email,
-                                    'profile_photo_url' => $user->profile_photo_url,
-                                    'membership' => [
-                                        'id' => $user->membership->id,
-                                        'role' => $user->membership->role,
-                                    ],
-                                ];
-                            }),
-                            'team_invitations' => $teamModel->teamInvitations->map(function (OrganizationInvitation $invitation): array {
-                                return [
-                                    'id' => $invitation->getKey(),
-                                    'email' => $invitation->email,
-                                    'role' => $invitation->role,
-                                ];
-                            }),
                         ],
                         'currencies' => array_map(function (Currency $currency): string {
                             return $currency->getName();

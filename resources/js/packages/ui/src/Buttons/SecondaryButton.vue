@@ -21,8 +21,8 @@ const props = withDefaults(
 );
 
 const sizeClasses = {
-    small: 'text-xs px-2 sm:px-2.5 py-1 sm:py-1.5',
-    base: 'text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2',
+    small: 'text-xs px-2.5 py-1.5',
+    base: 'h-9 px-3 text-sm',
 };
 </script>
 
@@ -32,7 +32,7 @@ const sizeClasses = {
         :disabled="loading"
         :class="
             twMerge(
-                'bg-button-secondary-background border border-button-secondary-border hover:bg-button-secondary-background-hover shadow-sm transition text-text-primary rounded-lg font-semibold inline-flex items-center space-x-1.5 focus-visible:outline-none focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-ring focus:border-transparent disabled:opacity-25 ease-in-out',
+                'bg-button-secondary-background border border-button-secondary-border hover:bg-button-secondary-background-hover shadow-sm transition text-text-primary rounded-lg font-medium inline-flex items-center space-x-1.5 focus-visible:outline-none focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-ring focus:border-transparent disabled:opacity-25 ease-in-out',
                 sizeClasses[props.size],
                 props.class
             )

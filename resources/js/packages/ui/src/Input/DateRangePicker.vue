@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
-import { Button } from '@/Components/ui/button';
-import { RangeCalendar } from '@/Components/ui/range-calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../popover';
+import Button from '../Buttons/Button.vue';
+import { RangeCalendar } from '../range-calendar';
 import { CalendarDate } from '@internationalized/date';
 import { CalendarIcon } from 'lucide-vue-next';
 import { computed, ref, inject, type ComputedRef, watch } from 'vue';
 import { twMerge } from 'tailwind-merge';
-import { getDayJsInstance, getLocalizedDayJs } from '@/packages/ui/src/utils/time';
+import {
+    getDayJsInstance,
+    getLocalizedDayJs,
+    firstDayIndex,
+    type WeekStartDay,
+} from '@/packages/ui/src/utils/time';
 import { type Organization } from '@/packages/api/src';
 import { getUserTimezone } from '@/packages/ui/src/utils/settings';
 import { formatDate } from '@/packages/ui/src/utils/time';
+
+const weekStartsOn = computed((): WeekStartDay => firstDayIndex.value as WeekStartDay);
 
 const props = defineProps<{
     start: string;
@@ -51,13 +58,14 @@ const modelValue = computed<CalendarDateRange>({
     }),
     set: (newValue) => {
         if (newValue.start) {
-            console.log(newValue.start);
             const date = newValue.start.toDate(getUserTimezone());
             emit('update:start', getLocalizedDayJs(date.toString()).format());
         }
         if (newValue.end) {
             const date = newValue.end.toDate(getUserTimezone());
             emit('update:end', getLocalizedDayJs(date.toString()).format());
+        } else {
+            emit('update:end', '');
         }
     },
 });
@@ -207,7 +215,8 @@ watch(open, (value) => {
                         v-model="modelValue"
                         initial-focus
                         :number-of-months="2"
-                        :max-value="today" />
+                        :max-value="today"
+                        :week-starts-on="weekStartsOn" />
                 </div>
             </div>
         </PopoverContent>

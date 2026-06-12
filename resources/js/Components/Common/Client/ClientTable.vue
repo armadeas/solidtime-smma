@@ -66,7 +66,7 @@ function handleSearch() {
                 <ClientTableHeading :sortOrder="sortOrder" @sort="handleSort" />
                 <div
                     v-if="clients.length === 0"
-                    class="col-span-2 py-24 text-center">
+                    class="col-span-4 py-24 text-center">
                     <UserCircleIcon
                         class="w-8 text-icon-default inline pb-2"></UserCircleIcon>
                     <h3 class="text-text-primary font-semibold">No clients found</h3>

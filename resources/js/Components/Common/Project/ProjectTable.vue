@@ -122,7 +122,7 @@ function handleSearch() {
                 ></ProjectTableHeading>
                 <div
                     v-if="projects.length === 0"
-                    class="col-span-5 py-24 text-center">
+                    class="col-span-7 py-24 text-center">
                     <FolderPlusIcon
                         class="w-8 text-icon-default inline pb-2"></FolderPlusIcon>
                     <h3 class="text-text-primary font-semibold">

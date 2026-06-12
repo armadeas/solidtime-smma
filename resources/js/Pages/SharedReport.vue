@@ -3,7 +3,7 @@ import MainContainer from '@/packages/ui/src/MainContainer.vue';
 import PageTitle from '@/Components/Common/PageTitle.vue';
 import { ChartBarIcon } from '@heroicons/vue/20/solid';
 import ReportingChart from '@/Components/Common/Reporting/ReportingChart.vue';
-import { formatHumanReadableDuration } from '@/packages/ui/src/utils/time';
+import { formatReportingDuration } from '@/packages/ui/src/utils/time';
 import ReportingRow from '@/Components/Common/Reporting/ReportingRow.vue';
 import ReportingPieChart from '@/Components/Common/Reporting/ReportingPieChart.vue';
 import { formatCents } from '@/packages/ui/src/utils/money';
@@ -37,7 +37,7 @@ onMounted(() => {
     const currentUrl = window.location.href;
     // check if # exists exactly once in the URL
     if (currentUrl.split('#').length === 2) {
-        sharedSecret.value = currentUrl.split('#')[1];
+        sharedSecret.value = currentUrl.split('#')[1] ?? null;
     }
 });
 
@@ -124,9 +124,10 @@ const groupedPieChartData = computed(() => {
             if (entry.description === null) {
                 return {
                     value: entry.seconds,
-                    name: emptyPlaceholder[
-                        aggregatedTableTimeEntries.value?.grouped_type ?? 'project'
-                    ],
+                    name:
+                        emptyPlaceholder[
+                            aggregatedTableTimeEntries.value?.grouped_type ?? 'project'
+                        ] ?? '',
                     color: '#CCCCCC',
                 };
             }
@@ -146,14 +147,17 @@ const tableData = computed(() => {
             cost: entry.cost,
             description:
                 entry.description ??
-                emptyPlaceholder[aggregatedTableTimeEntries.value?.grouped_type ?? 'project'],
+                emptyPlaceholder[aggregatedTableTimeEntries.value?.grouped_type ?? 'project'] ??
+                '',
             grouped_data:
                 entry.grouped_data?.map((el) => {
                     return {
                         seconds: el.seconds,
                         cost: el.cost,
                         description:
-                            el.description ?? emptyPlaceholder[entry.grouped_type ?? 'project'],
+                            el.description ??
+                            emptyPlaceholder[entry.grouped_type ?? 'project'] ??
+                            '',
                     };
                 }) ?? [],
         };
@@ -217,6 +221,8 @@ onMounted(async () => {
                                 v-for="entry in tableData"
                                 :key="entry.description ?? 'none'"
                                 :currency="reportCurrency"
+                                :currency-format="reportCurrencyFormat"
+                                :show-cost="true"
                                 :entry="entry"></ReportingRow>
                             <div
                                 class="contents [&>*]:transition text-text-tertiary [&>*]:h-[50px]">
@@ -225,7 +231,7 @@ onMounted(async () => {
                                 </div>
                                 <div class="justify-end flex items-center font-medium">
                                     {{
-                                        formatHumanReadableDuration(
+                                        formatReportingDuration(
                                             aggregatedTableTimeEntries.seconds,
                                             reportIntervalFormat,
                                             reportNumberFormat
@@ -234,12 +240,15 @@ onMounted(async () => {
                                 </div>
                                 <div class="justify-end pr-6 flex items-center font-medium">
                                     {{
-                                        formatCents(
-                                            aggregatedTableTimeEntries.cost,
-                                            reportCurrency,
-                                            reportCurrencyFormat,
-                                            reportCurrencySymbol
-                                        )
+                                        aggregatedTableTimeEntries.cost
+                                            ? formatCents(
+                                                  aggregatedTableTimeEntries.cost,
+                                                  reportCurrency,
+                                                  reportCurrencyFormat,
+                                                  reportCurrencySymbol,
+                                                  reportNumberFormat
+                                              )
+                                            : '--'
                                     }}
                                 </div>
                             </div>

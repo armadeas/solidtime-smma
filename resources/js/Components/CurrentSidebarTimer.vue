@@ -44,13 +44,14 @@ const isRunningInDifferentOrganization = computed(() => {
         </div>
         <div>
             <div class="text-text-secondary font-medium text-xs">Current Timer</div>
-            <div class="text-text-primary font-medium text-lg">
+            <div class="text-text-primary font-medium text-base">
                 {{ currentTime }}
             </div>
         </div>
         <TimeTrackerStartStop
             :active="isActive"
             size="base"
+            variant="secondary"
             @changed="setActiveState"></TimeTrackerStartStop>
     </div>
 </template>

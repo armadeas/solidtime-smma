@@ -2,9 +2,10 @@
 import {
     calculateDifference,
     formatHumanReadableDuration,
+    formatReportingDuration,
     parseTimeInput,
 } from '@/packages/ui/src/utils/time';
-import { computed, defineProps, ref, inject, type ComputedRef } from 'vue';
+import { computed, ref, inject, type ComputedRef } from 'vue';
 import dayjs from 'dayjs';
 import type { Organization } from '@/packages/api/src';
 
@@ -18,6 +19,7 @@ const organizationSettings = computed(() => ({
 const props = defineProps<{
     start: string;
     end: string | null;
+    isReport?: boolean;
 }>();
 const emit = defineEmits<{
     changed: [start: string, end: string | null];
@@ -27,9 +29,11 @@ const temporaryCustomTimerEntry = ref<string>('');
 const open = ref(false);
 
 function updateTimerAndStartLiveTimerUpdate() {
-    const defaultUnit =
-        organizationSettings?.value?.intervalFormat === 'decimal' ? 'hours' : 'minutes';
-    const seconds = parseTimeInput(temporaryCustomTimerEntry.value, defaultUnit);
+    const seconds = parseTimeInput(
+        temporaryCustomTimerEntry.value,
+        organizationSettings.value.numberFormat,
+        organizationSettings.value.intervalFormat === 'decimal' ? 'hours' : 'minutes'
+    );
     if (seconds && seconds > 0) {
         let newEndDate = props.end;
         let newStartDate = props.start;
@@ -49,7 +53,8 @@ const currentTime = computed({
         if (temporaryCustomTimerEntry.value !== '') {
             return temporaryCustomTimerEntry.value;
         }
-        return formatHumanReadableDuration(
+        const formatter = props.isReport ? formatReportingDuration : formatHumanReadableDuration;
+        return formatter(
             calculateDifference(props.start, props.end),
             organizationSettings.value.intervalFormat,
             organizationSettings.value.numberFormat
@@ -77,7 +82,7 @@ function selectInput(event: Event) {
         v-model="currentTime"
         data-testid="time_entry_duration_input"
         name="Duration"
-        class="text-text-primary w-[90px] px-2.5 py-1.5 bg-transparent text-right hover:bg-card-background rounded-lg border border-transparent hover:border-card-border text-sm font-medium focus-visible:bg-tertiary focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-ring"
+        class="text-text-primary w-[80px] !mr-2 px-1.5 py-1.5 bg-transparent text-right hover:bg-card-background rounded-lg border border-transparent hover:border-card-border text-sm font-medium focus-visible:bg-tertiary focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-ring"
         @focus="selectInput"
         @keydown.tab="open = false"
         @blur="updateTimerAndStartLiveTimerUpdate"

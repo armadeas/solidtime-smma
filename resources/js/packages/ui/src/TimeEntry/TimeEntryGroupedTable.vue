@@ -20,23 +20,30 @@ const selectedTimeEntries = defineModel<TimeEntry[]>('selected', {
     default: [],
 });
 
-const props = defineProps<{
-    timeEntries: TimeEntry[];
-    projects: Project[];
-    tasks: Task[];
-    tags: Tag[];
-    clients: Client[];
-    createTag: (name: string) => Promise<Tag | undefined>;
-    updateTimeEntry: (entry: TimeEntry) => void;
-    updateTimeEntries: (ids: string[], changes: Partial<TimeEntry>) => void;
-    deleteTimeEntries: (entries: TimeEntry[]) => void;
-    createTimeEntry: (entry: Omit<CreateTimeEntryBody, 'member_id'>) => void;
-    createProject: (project: CreateProjectBody) => Promise<Project | undefined>;
-    createClient: (client: CreateClientBody) => Promise<Client | undefined>;
-    currency: string;
-    enableEstimatedTime: boolean;
-    canCreateProject: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        timeEntries: TimeEntry[];
+        projects: Project[];
+        tasks: Task[];
+        tags: Tag[];
+        clients: Client[];
+        createTag: (name: string) => Promise<Tag | undefined>;
+        updateTimeEntry: (entry: TimeEntry) => void;
+        updateTimeEntries: (ids: string[], changes: Partial<TimeEntry>) => void;
+        deleteTimeEntries: (entries: TimeEntry[]) => void;
+        createTimeEntry: (entry: Omit<CreateTimeEntryBody, 'member_id'>) => void;
+        createProject: (project: CreateProjectBody) => Promise<Project | undefined>;
+        createClient: (client: CreateClientBody) => Promise<Client | undefined>;
+        currency: string;
+        organizationBillableRate: number | null;
+        enableEstimatedTime: boolean;
+        canCreateProject: boolean;
+        groupSimilarTimeEntries?: boolean;
+    }>(),
+    {
+        groupSimilarTimeEntries: true,
+    }
+);
 
 const groupedTimeEntries = computed(() => {
     const groupedEntriesByDay: Record<string, TimeEntry[]> = {};
@@ -53,10 +60,15 @@ const groupedTimeEntries = computed(() => {
     }
     const groupedEntriesByDayAndType: Record<string, TimeEntriesGroupedByType[]> = {};
     for (const dailyEntriesKey in groupedEntriesByDay) {
-        const dailyEntries = groupedEntriesByDay[dailyEntriesKey];
+        const dailyEntries = groupedEntriesByDay[dailyEntriesKey]!;
         const newDailyEntries: TimeEntriesGroupedByType[] = [];
 
         for (const entry of dailyEntries) {
+            if (!props.groupSimilarTimeEntries) {
+                newDailyEntries.push({ ...entry, timeEntries: [entry] });
+                continue;
+            }
+
             // check if same entry already exists
             const oldEntriesIndex = newDailyEntries.findIndex(
                 (e) =>
@@ -66,26 +78,22 @@ const groupedTimeEntries = computed(() => {
                     e.description === entry.description
             );
             if (oldEntriesIndex !== -1 && newDailyEntries[oldEntriesIndex]) {
-                newDailyEntries[oldEntriesIndex].timeEntries.push(entry);
+                const existingEntry = newDailyEntries[oldEntriesIndex]!;
+                existingEntry.timeEntries.push(entry);
 
                 // Add up durations for time entries of the same type
-                newDailyEntries[oldEntriesIndex].duration =
-                    (newDailyEntries[oldEntriesIndex].duration ?? 0) + (entry?.duration ?? 0);
+                existingEntry.duration = (existingEntry.duration ?? 0) + (entry?.duration ?? 0);
 
                 // adapt start end times so they show the earliest start and latest end time
                 if (
                     getDayJsInstance()(entry.start).isBefore(
-                        getDayJsInstance()(newDailyEntries[oldEntriesIndex].start)
+                        getDayJsInstance()(existingEntry.start)
                     )
                 ) {
-                    newDailyEntries[oldEntriesIndex].start = entry.start;
+                    existingEntry.start = entry.start;
                 }
-                if (
-                    getDayJsInstance()(entry.end).isAfter(
-                        getDayJsInstance()(newDailyEntries[oldEntriesIndex].end)
-                    )
-                ) {
-                    newDailyEntries[oldEntriesIndex].end = entry.end;
+                if (getDayJsInstance()(entry.end).isAfter(getDayJsInstance()(existingEntry.end))) {
+                    existingEntry.end = entry.end;
                 }
             } else {
                 newDailyEntries.push({ ...entry, timeEntries: [entry] });
@@ -94,6 +102,7 @@ const groupedTimeEntries = computed(() => {
 
         groupedEntriesByDayAndType[dailyEntriesKey] = newDailyEntries;
     }
+
     return groupedEntriesByDayAndType;
 });
 
@@ -137,79 +146,83 @@ function unselectAllTimeEntries(value: TimeEntriesGroupedByType[]) {
 </script>
 
 <template>
-    <div v-for="(value, key) in groupedTimeEntries" :key="key">
-        <TimeEntryRowHeading
-            :date="key"
-            :duration="sumDuration(value)"
-            :checked="
-                value.every((timeEntry: TimeEntry) => selectedTimeEntries.includes(timeEntry))
-            "
-            @select-all="selectAllTimeEntries(value)"
-            @unselect-all="unselectAllTimeEntries(value)"></TimeEntryRowHeading>
-        <template v-for="entry in value" :key="entry.id">
-            <TimeEntryAggregateRow
-                v-if="'timeEntries' in entry && entry.timeEntries.length > 1"
-                :create-project
-                :can-create-project
-                :enable-estimated-time
-                :selected-time-entries="selectedTimeEntries"
-                :create-client
-                :projects="projects"
-                :tasks="tasks"
-                :tags="tags"
-                :clients
-                :on-start-stop-click="startTimeEntryFromExisting"
-                :duplicate-time-entry="createTimeEntry"
-                :update-time-entries
-                :update-time-entry
-                :delete-time-entries
-                :create-tag
-                :currency="currency"
-                :time-entry="entry"
-                @selected="
-                    (timeEntries: TimeEntry[]) => {
-                        selectedTimeEntries = [...selectedTimeEntries, ...timeEntries];
-                    }
+    <div class="@container">
+        <div v-for="(value, key) in groupedTimeEntries" :key="key">
+            <TimeEntryRowHeading
+                :date="String(key)"
+                :duration="sumDuration(value)"
+                :checked="
+                    value.every((timeEntry: TimeEntry) => selectedTimeEntries.includes(timeEntry))
                 "
-                @unselected="
-                    (timeEntriesToUnselect: TimeEntry[]) => {
+                @select-all="selectAllTimeEntries(value)"
+                @unselect-all="unselectAllTimeEntries(value)"></TimeEntryRowHeading>
+            <template v-for="entry in value" :key="entry.id">
+                <TimeEntryAggregateRow
+                    v-if="'timeEntries' in entry && entry.timeEntries.length > 1"
+                    :create-project
+                    :can-create-project
+                    :enable-estimated-time
+                    :selected-time-entries="selectedTimeEntries"
+                    :create-client
+                    :projects="projects"
+                    :tasks="tasks"
+                    :tags="tags"
+                    :clients
+                    :on-start-stop-click="startTimeEntryFromExisting"
+                    :duplicate-time-entry="createTimeEntry"
+                    :update-time-entries
+                    :update-time-entry
+                    :delete-time-entries
+                    :create-tag
+                    :currency="currency"
+                    :organization-billable-rate="organizationBillableRate"
+                    :time-entry="entry"
+                    @selected="
+                        (timeEntries: TimeEntry[]) => {
+                            selectedTimeEntries = [...selectedTimeEntries, ...timeEntries];
+                        }
+                    "
+                    @unselected="
+                        (timeEntriesToUnselect: TimeEntry[]) => {
+                            selectedTimeEntries = selectedTimeEntries.filter(
+                                (item: TimeEntry) =>
+                                    !timeEntriesToUnselect.find(
+                                        (filterEntry: TimeEntry) => filterEntry.id === item.id
+                                    )
+                            );
+                        }
+                    "></TimeEntryAggregateRow>
+                <TimeEntryRow
+                    v-else
+                    :create-client
+                    :enable-estimated-time
+                    :can-create-project
+                    :create-project
+                    :projects="projects"
+                    :selected="
+                        !!selectedTimeEntries.find(
+                            (filterEntry: TimeEntry) => filterEntry.id === entry.id
+                        )
+                    "
+                    :tasks="tasks"
+                    :tags="tags"
+                    :clients
+                    :create-tag
+                    :organization-billable-rate="organizationBillableRate"
+                    :update-time-entry
+                    :on-start-stop-click="() => startTimeEntryFromExisting(entry)"
+                    :delete-time-entry="() => deleteTimeEntries([entry])"
+                    :duplicate-time-entry="() => createTimeEntry(entry)"
+                    :currency="currency"
+                    :time-entry="entry.timeEntries[0]!"
+                    @selected="selectedTimeEntries.push(entry)"
+                    @unselected="
                         selectedTimeEntries = selectedTimeEntries.filter(
-                            (item: TimeEntry) =>
-                                !timeEntriesToUnselect.find(
-                                    (filterEntry: TimeEntry) => filterEntry.id === item.id
-                                )
-                        );
-                    }
-                "></TimeEntryAggregateRow>
-            <TimeEntryRow
-                v-else
-                :create-client
-                :enable-estimated-time
-                :can-create-project
-                :create-project
-                :projects="projects"
-                :selected="
-                    !!selectedTimeEntries.find(
-                        (filterEntry: TimeEntry) => filterEntry.id === entry.id
-                    )
-                "
-                :tasks="tasks"
-                :tags="tags"
-                :clients
-                :create-tag
-                :update-time-entry
-                :on-start-stop-click="() => startTimeEntryFromExisting(entry)"
-                :delete-time-entry="() => deleteTimeEntries([entry])"
-                :duplicate-time-entry="() => createTimeEntry(entry)"
-                :currency="currency"
-                :time-entry="entry.timeEntries[0]"
-                @selected="selectedTimeEntries.push(entry)"
-                @unselected="
-                    selectedTimeEntries = selectedTimeEntries.filter(
-                        (item: TimeEntry) => item.id !== entry.id
-                    )
-                "></TimeEntryRow>
-        </template>
+                            (item: TimeEntry) => item.id !== entry.id
+                        )
+                    "></TimeEntryRow>
+            </template>
+        </div>
     </div>
 </template>
 

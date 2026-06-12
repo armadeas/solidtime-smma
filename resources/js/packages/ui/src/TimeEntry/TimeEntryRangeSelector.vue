@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Dropdown from '@/packages/ui/src/Input/Dropdown.vue';
-import { defineProps, ref, inject, type ComputedRef } from 'vue';
+import { ref, inject, type ComputedRef } from 'vue';
 import { formatDateLocalized, formatStartEnd } from '@/packages/ui/src/utils/time';
 import TimeRangeSelector from '@/packages/ui/src/Input/TimeRangeSelector.vue';
 import { twMerge } from 'tailwind-merge';
@@ -35,16 +35,14 @@ const organization = inject<ComputedRef<Organization>>('organization');
                     data-testid="time_entry_range_selector"
                     :class="
                         twMerge(
-                            'text-text-secondary px-2 bg-transparent text-center hover:bg-card-background rounded-lg border border-transparent hover:border-card-border focus-visible:outline-none focus:outline-none focus-visible:ring-2 focus-visible:text-text-primary focus-visible:ring-ring focus-visible:bg-tertiary',
-                            showDate
-                                ? 'text-xs py-1.5 font-semibold'
-                                : 'text-sm py-1.5 font-medium',
-                            organization?.time_format === '12-hours' ? 'w-[170px]' : 'w-[120px]',
+                            'text-text-secondary px-1 bg-transparent text-center hover:bg-card-background rounded-lg border border-transparent hover:border-card-border focus-visible:outline-none focus:outline-none focus-visible:ring-2 focus-visible:text-text-primary focus-visible:ring-ring focus-visible:bg-tertiary',
+                            showDate ? 'text-xs py-1.5 font-medium' : 'text-sm py-1.5 font-normal',
+                            organization?.time_format === '12-hours' ? 'w-[160px]' : 'w-[100px]',
                             open && 'border-card-border bg-card-background'
                         )
                     ">
                     {{ formatStartEnd(start, end, organization?.time_format) }}
-                    <span v-if="showDate" class="text-text-tertiary font-medium"
+                    <span v-if="showDate" class="text-text-tertiary font-normal"
                         >{{ formatDateLocalized(start, organization?.date_format) }}
                     </span>
                 </button>

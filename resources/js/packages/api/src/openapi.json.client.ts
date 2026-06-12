@@ -41,7 +41,6 @@ const ClientResource = z
         updated_at: z.string(),
     })
     .passthrough();
-const ClientCollection = z.array(ClientResource);
 const ClientStoreRequest = z
     .object({
         name: z.string().min(1).max(255),
@@ -127,6 +126,7 @@ const OrganizationResource = z
         is_personal: z.boolean(),
         billable_rate: z.union([z.number(), z.null()]),
         employees_can_see_billable_rates: z.boolean(),
+        employees_can_manage_tasks: z.boolean(),
         prevent_overlapping_time_entries: z.boolean(),
         currency: z.string(),
         currency_symbol: z.string(),
@@ -142,6 +142,7 @@ const OrganizationUpdateRequest = z
         name: z.string().max(255),
         billable_rate: z.union([z.number(), z.null()]),
         employees_can_see_billable_rates: z.boolean(),
+        employees_can_manage_tasks: z.boolean(),
         prevent_overlapping_time_entries: z.boolean(),
         number_format: NumberFormat,
         currency_format: CurrencyFormat,
@@ -253,10 +254,10 @@ const ReportStoreRequest = z
                 active: z.union([z.boolean(), z.null()]).optional(),
                 member_ids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
                 billable: z.union([z.boolean(), z.null()]).optional(),
-                client_ids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
-                project_ids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
-                tag_ids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
-                task_ids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
+                client_ids: z.union([z.array(z.string()), z.null()]).optional(),
+                project_ids: z.union([z.array(z.string()), z.null()]).optional(),
+                tag_ids: z.union([z.array(z.string()), z.null()]).optional(),
+                task_ids: z.union([z.array(z.string()), z.null()]).optional(),
                 group: TimeEntryAggregationType,
                 sub_group: TimeEntryAggregationType,
                 history_group: TimeEntryAggregationTypeInterval,
@@ -407,7 +408,6 @@ const DetailedWithDataReportResource = z
 const TagResource = z
     .object({ id: z.string(), name: z.string(), created_at: z.string(), updated_at: z.string() })
     .passthrough();
-const TagCollection = z.array(TagResource);
 const TagStoreRequest = z.object({ name: z.string().min(1).max(255) }).passthrough();
 const TagUpdateRequest = z.object({ name: z.string().min(1).max(255) }).passthrough();
 const TaskResource = z
@@ -515,6 +515,8 @@ const UnlockRequestResource = z
         is_active: z.boolean(),
         created_at: z.string(),
         updated_at: z.string(),
+        unlock_audits: z.union([z.array(z.unknown()), z.null()]).optional(),
+        unlock_audits_count: z.union([z.number(), z.null()]).optional(),
     })
     .passthrough();
 const UserResource = z
@@ -544,7 +546,6 @@ export const schemas = {
     ApiTokenWithAccessTokenResource,
     sort,
     ClientResource,
-    ClientCollection,
     ClientStoreRequest,
     ClientUpdateRequest,
     ImportRequest,
@@ -578,7 +579,6 @@ export const schemas = {
     ReportUpdateRequest,
     DetailedWithDataReportResource,
     TagResource,
-    TagCollection,
     TagStoreRequest,
     TagUpdateRequest,
     TaskResource,
@@ -1022,7 +1022,39 @@ const endpoints = makeApi([
                 schema: sort,
             },
         ],
-        response: z.object({ data: ClientCollection }).passthrough(),
+        response: z
+            .object({
+                data: z.array(ClientResource),
+                links: z
+                    .object({
+                        first: z.union([z.string(), z.null()]),
+                        last: z.union([z.string(), z.null()]),
+                        prev: z.union([z.string(), z.null()]),
+                        next: z.union([z.string(), z.null()]),
+                    })
+                    .passthrough(),
+                meta: z
+                    .object({
+                        current_page: z.number().int(),
+                        from: z.union([z.number(), z.null()]),
+                        last_page: z.number().int(),
+                        links: z.array(
+                            z
+                                .object({
+                                    url: z.union([z.string(), z.null()]),
+                                    label: z.string(),
+                                    active: z.boolean(),
+                                })
+                                .passthrough()
+                        ),
+                        path: z.union([z.string(), z.null()]),
+                        per_page: z.number().int(),
+                        to: z.union([z.number(), z.null()]),
+                        total: z.number().int(),
+                    })
+                    .passthrough(),
+            })
+            .passthrough(),
         errors: [
             {
                 status: 401,
@@ -1333,6 +1365,11 @@ const endpoints = makeApi([
                 type: 'Path',
                 schema: z.string(),
             },
+            {
+                name: 'page',
+                type: 'Query',
+                schema: z.number().int().gte(1).lte(2147483647).optional(),
+            },
         ],
         response: z
             .object({
@@ -1579,6 +1616,11 @@ const endpoints = makeApi([
                 name: 'organization',
                 type: 'Path',
                 schema: z.string(),
+            },
+            {
+                name: 'page',
+                type: 'Query',
+                schema: z.number().int().gte(1).lte(2147483647).optional(),
             },
         ],
         response: z
@@ -2205,6 +2247,11 @@ const endpoints = makeApi([
                 type: 'Path',
                 schema: z.string(),
             },
+            {
+                name: 'page',
+                type: 'Query',
+                schema: z.number().int().gte(1).lte(2147483647).optional(),
+            },
         ],
         response: z
             .object({
@@ -2254,6 +2301,13 @@ const endpoints = makeApi([
                 status: 404,
                 description: `Not found`,
                 schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 422,
+                description: `Validation error`,
+                schema: z
+                    .object({ message: z.string(), errors: z.record(z.array(z.string())) })
+                    .passthrough(),
             },
         ],
     },
@@ -2323,6 +2377,11 @@ const endpoints = makeApi([
                 type: 'Path',
                 schema: z.string(),
             },
+            {
+                name: 'page',
+                type: 'Query',
+                schema: z.number().int().gte(1).lte(2147483647).optional(),
+            },
         ],
         response: z
             .object({
@@ -2372,6 +2431,13 @@ const endpoints = makeApi([
                 status: 404,
                 description: `Not found`,
                 schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 422,
+                description: `Validation error`,
+                schema: z
+                    .object({ message: z.string(), errors: z.record(z.array(z.string())) })
+                    .passthrough(),
             },
         ],
     },
@@ -2549,8 +2615,45 @@ const endpoints = makeApi([
                 type: 'Path',
                 schema: z.string(),
             },
+            {
+                name: 'page',
+                type: 'Query',
+                schema: z.number().int().gte(1).lte(2147483647).optional(),
+            },
         ],
-        response: z.object({ data: TagCollection }).passthrough(),
+        response: z
+            .object({
+                data: z.array(TagResource),
+                links: z
+                    .object({
+                        first: z.union([z.string(), z.null()]),
+                        last: z.union([z.string(), z.null()]),
+                        prev: z.union([z.string(), z.null()]),
+                        next: z.union([z.string(), z.null()]),
+                    })
+                    .passthrough(),
+                meta: z
+                    .object({
+                        current_page: z.number().int(),
+                        from: z.union([z.number(), z.null()]),
+                        last_page: z.number().int(),
+                        links: z.array(
+                            z
+                                .object({
+                                    url: z.union([z.string(), z.null()]),
+                                    label: z.string(),
+                                    active: z.boolean(),
+                                })
+                                .passthrough()
+                        ),
+                        path: z.union([z.string(), z.null()]),
+                        per_page: z.number().int(),
+                        to: z.union([z.number(), z.null()]),
+                        total: z.number().int(),
+                    })
+                    .passthrough(),
+            })
+            .passthrough(),
         errors: [
             {
                 status: 401,
@@ -2566,6 +2669,13 @@ const endpoints = makeApi([
                 status: 404,
                 description: `Not found`,
                 schema: z.object({ message: z.string() }).passthrough(),
+            },
+            {
+                status: 422,
+                description: `Validation error`,
+                schema: z
+                    .object({ message: z.string(), errors: z.record(z.array(z.string())) })
+                    .passthrough(),
             },
         ],
     },
@@ -2713,6 +2823,11 @@ const endpoints = makeApi([
                 name: 'organization',
                 type: 'Path',
                 schema: z.string(),
+            },
+            {
+                name: 'page',
+                type: 'Query',
+                schema: z.number().int().gte(1).lte(2147483647).optional(),
             },
             {
                 name: 'project_id',
@@ -3649,19 +3764,24 @@ If the group parameters are all set to &#x60;null&#x60; or are all missing, the 
                 schema: z.array(z.string().uuid()).optional(),
             },
             {
+                name: 'client_ids[]',
+                type: 'Query',
+                schema: z.array(z.string()).optional(),
+            },
+            {
                 name: 'project_ids[]',
                 type: 'Query',
-                schema: z.array(z.string().uuid()).optional(),
+                schema: z.array(z.string()).optional(),
             },
             {
                 name: 'tag_ids[]',
                 type: 'Query',
-                schema: z.array(z.string().uuid()).optional(),
+                schema: z.array(z.string()).optional(),
             },
             {
                 name: 'task_ids[]',
                 type: 'Query',
-                schema: z.array(z.string().uuid()).optional(),
+                schema: z.array(z.string()).optional(),
             },
             {
                 name: 'start',

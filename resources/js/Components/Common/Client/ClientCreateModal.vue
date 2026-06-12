@@ -7,8 +7,8 @@ import type { CreateClientBody } from '@/packages/api/src';
 import PrimaryButton from '@/packages/ui/src/Buttons/PrimaryButton.vue';
 import { useFocus } from '@vueuse/core';
 import { useClientsStore } from '@/utils/useClients';
-import InputLabel from '@/packages/ui/src/Input/InputLabel.vue';
 import TextInputArea from '@/packages/ui/src/Input/TextInputArea.vue';
+import { Field, FieldLabel } from '@/packages/ui/src/field';
 
 const { createClient } = useClientsStore();
 const show = defineModel('show', { default: false });
@@ -51,120 +51,120 @@ useFocus(clientNameInput, { initialValue: true });
         </template>
 
         <template #content>
-            <div class="flex items-center space-x-4 mb-4">
-                <div class="col-span-6 sm:col-span-4 flex-1">
-                    <InputLabel for="clientName" value="Client Name" />
-                    <TextInput
-                        id="clientName"
-                        ref="clientNameInput"
-                        v-model="client.name"
-                        type="text"
-                        placeholder="Client Name"
-                        class="mt-1 block w-full"
-                        required
-                        autocomplete="clientName"
-                        @keydown.enter="submit" />
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center space-x-4">
+                    <Field class="col-span-6 sm:col-span-4 flex-1">
+                        <FieldLabel for="clientName">Client Name</FieldLabel>
+                        <TextInput
+                            id="clientName"
+                            ref="clientNameInput"
+                            v-model="client.name"
+                            type="text"
+                            placeholder="Client Name"
+                            class="block w-full"
+                            required
+                            autocomplete="clientName"
+                            @keydown.enter="submit" />
+                    </Field>
                 </div>
-            </div>
-            <div class="flex items-center space-x-4 mb-4">
-                <div class="col-span-6 sm:col-span-4 flex-1">
-                    <InputLabel for="clientEmail" value="Client Email" />
-                    <TextInput
-                        id="clientEmail"
-                        ref="clientEmailInput"
-                        v-model="client.email"
-                        type="text"
-                        placeholder="Client Email"
-                        class="mt-1 block w-full"
-                        required
-                        autocomplete="clientEmail"
-                        @keydown.enter="submit" />
+                <div class="flex items-center space-x-4">
+                    <Field class="col-span-6 sm:col-span-4 flex-1">
+                        <FieldLabel for="clientEmail">Client Email</FieldLabel>
+                        <TextInput
+                            id="clientEmail"
+                            ref="clientEmailInput"
+                            v-model="client.email"
+                            type="text"
+                            placeholder="Client Email"
+                            class="block w-full"
+                            required
+                            autocomplete="clientEmail"
+                            @keydown.enter="submit" />
+                    </Field>
+                    <Field class="col-span-6 sm:col-span-4 flex-1">
+                        <FieldLabel for="clientPhone">Client Phone</FieldLabel>
+                        <TextInput
+                            id="clientPhone"
+                            ref="clientPhoneInput"
+                            v-model="client.phone"
+                            type="text"
+                            placeholder="Client Phone"
+                            class="block w-full"
+                            required
+                            autocomplete="clientPhone"
+                            @keydown.enter="submit" />
+                    </Field>
                 </div>
-                <div class="col-span-6 sm:col-span-4 flex-1">
-                    <InputLabel for="clientPhone" value="Client Phone" />
-                    <TextInput
-                        id="clientPhone"
-                        ref="clientPhoneInput"
-                        v-model="client.phone"
-                        type="text"
-                        placeholder="Client Phone"
-                        class="mt-1 block w-full"
-                        required
-                        autocomplete="clientPhone"
-                        @keydown.enter="submit" />
+                <div class="flex items-center space-x-4">
+                    <Field class="col-span-6 sm:col-span-4 flex-1">
+                        <FieldLabel for="clientCity">Client City</FieldLabel>
+                        <TextInput
+                            id="clientCity"
+                            ref="clientCityInput"
+                            v-model="client.city"
+                            type="text"
+                            placeholder="Client City"
+                            class="block w-full"
+                            required
+                            autocomplete="clientCity"
+                            @keydown.enter="submit" />
+                    </Field>
+                    <Field class="col-span-6 sm:col-span-4 flex-1">
+                        <FieldLabel for="clientCountry">Client Country</FieldLabel>
+                        <TextInput
+                            id="clientCountry"
+                            ref="clientCountryInput"
+                            v-model="client.country"
+                            type="text"
+                            placeholder="Client Country"
+                            class="block w-full"
+                            required
+                            autocomplete="clientCountry"
+                            @keydown.enter="submit" />
+                    </Field>
                 </div>
-            </div>
-            <div class="flex items-center space-x-4 mb-4">
-                <div class="col-span-6 sm:col-span-4 flex-1">
-                    <InputLabel for="clientCity" value="Client City" />
-                    <TextInput
-                        id="clientCity"
-                        ref="clientCityInput"
-                        v-model="client.city"
-                        type="text"
-                        placeholder="Client City"
-                        class="mt-1 block w-full"
-                        required
-                        autocomplete="clientCity"
-                        @keydown.enter="submit" />
+                <div class="flex items-center space-x-4">
+                    <Field class="col-span-6 sm:col-span-4 flex-1">
+                        <FieldLabel for="clientPostalCode">Postal Code</FieldLabel>
+                        <TextInput
+                            id="clientPostalCode"
+                            ref="clientPostalCodeInput"
+                            v-model="client.postal_code"
+                            type="text"
+                            placeholder="Postal Code"
+                            class="block w-full"
+                            required
+                            autocomplete="clientPostalCode"
+                            @keydown.enter="submit" />
+                    </Field>
+                    <Field class="col-span-6 sm:col-span-4 flex-1">
+                        <FieldLabel for="clientTaxNumber">Tax Number</FieldLabel>
+                        <TextInput
+                            id="clientTaxNumber"
+                            ref="clientTaxNumberInput"
+                            v-model="client.taxNumber"
+                            type="text"
+                            placeholder="Tax Number"
+                            class="block w-full"
+                            required
+                            autocomplete="clientTaxNumber"
+                            @keydown.enter="submit" />
+                    </Field>
                 </div>
-                <div class="col-span-6 sm:col-span-4 flex-1">
-                    <InputLabel for="clientCountry" value="Client Country" />
-                    <TextInput
-                        id="clientCountry"
-                        ref="clientCountryInput"
-                        v-model="client.country"
-                        type="text"
-                        placeholder="Client Country"
-                        class="mt-1 block w-full"
-                        required
-                        autocomplete="clientCountry"
-                        @keydown.enter="submit" />
-                </div>
-            </div>
-            <div class="flex items-center space-x-4 mb-4">
-                <div class="col-span-6 sm:col-span-4 flex-1">
-                    <InputLabel for="clientPostalCode" value="Postal Code" />
-                    <TextInput
-                        id="clientPostalCode"
-                        ref="clientPostalCodeInput"
-                        v-model="client.postal_code"
-                        type="text"
-                        placeholder="Postal Code"
-                        class="mt-1 block w-full"
-                        required
-                        autocomplete="clientPostalCode"
-                        @keydown.enter="submit" />
-                </div>
-            </div>
-            <div class="flex items-center space-x-4 mb-4">
-                <div class="col-span-6 sm:col-span-4 flex-1">
-                    <InputLabel for="clientTaxNumber" value="Tax Number" />
-                    <TextInput
-                        id="clientTaxNumber"
-                        ref="clientTaxNumberInput"
-                        v-model="client.taxNumber"
-                        type="text"
-                        placeholder="Tax Number"
-                        class="mt-1 block w-full"
-                        required
-                        autocomplete="clientTaxNumber"
-                        @keydown.enter="submit" />
-                </div>
-            </div>
-            <div class="flex items-center space-x-4 mb-4">
-                <div class="col-span-6 sm:col-span-4 flex-1">
-                    <InputLabel for="clientAddress" value="Client Address" />
-                    <TextInputArea
-                        id="clientAddress"
-                        ref="clientAddressInput"
-                        v-model="client.address"
-                        type="text"
-                        placeholder="Client Address"
-                        required
-                        autocomplete="clientAddress"
-                        @keydown.enter="submit"
-                        class="mt-1 block w-full" />
+                <div class="flex items-center space-x-4">
+                    <Field class="col-span-6 sm:col-span-4 flex-1">
+                        <FieldLabel for="clientAddress">Client Address</FieldLabel>
+                        <TextInputArea
+                            id="clientAddress"
+                            ref="clientAddressInput"
+                            v-model="client.address"
+                            type="text"
+                            placeholder="Client Address"
+                            required
+                            autocomplete="clientAddress"
+                            @keydown.enter="submit"
+                            class="block w-full" />
+                    </Field>
                 </div>
             </div>
         </template>

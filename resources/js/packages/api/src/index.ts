@@ -66,6 +66,7 @@ export type InviteMemberBody = ZodiosBodyByAlias<SolidTimeApi, 'invite'>;
 export type MemberRole = InviteMemberBody['role'];
 
 export type CreateTagBody = ZodiosBodyByAlias<SolidTimeApi, 'createTag'>;
+export type UpdateTagBody = ZodiosBodyByAlias<SolidTimeApi, 'updateTag'>;
 
 export type ImportType = ZodiosResponseByAlias<SolidTimeApi, 'getImporters'>['data'][0];
 export type ImportReport = ZodiosResponseByAlias<SolidTimeApi, 'importData'>;
@@ -117,6 +118,8 @@ export type CreateApiTokenBody = ZodiosBodyByAlias<SolidTimeApi, 'createApiToken
 export type ApiToken = ApiTokenIndexResponse['data'][0];
 
 export type DetailedInvoiceResponse = ZodiosResponseByAlias<SolidTimeApi, 'getInvoice'>;
+
+export type DetailedInvoice = DetailedInvoiceResponse['data'];
 
 export type InvoiceIndexEntry = ZodiosResponseByAlias<SolidTimeApi, 'getInvoices'>['data'][0];
 

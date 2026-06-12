@@ -76,7 +76,9 @@ class ProjectController extends Controller
             $projectsQuery->whereNull('archived_at');
         }
 
-        $projects = $projectsQuery->paginate(config('app.pagination_per_page_default'));
+        $projects = $projectsQuery
+            ->orderBy('created_at', 'desc')
+            ->paginate(config('app.pagination_per_page_default'));
 
         $showBillableRate = $this->member($organization)->role !== Role::Employee->value || $organization->employees_can_see_billable_rates;
 
@@ -92,7 +94,7 @@ class ProjectController extends Controller
      */
     public function show(Organization $organization, Project $project): JsonResource
     {
-        $this->checkPermission($organization, 'projects:view', $project);
+        $this->checkPermission($organization, 'projects:view:all', $project);
 
         // Note: There is currently no need to check if a user is a member of the project,
         // since this is only relevant for users with the role "employee" and they can not access this endpoint.
