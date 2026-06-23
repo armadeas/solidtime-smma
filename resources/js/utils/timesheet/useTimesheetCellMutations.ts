@@ -1,5 +1,6 @@
 import { ref, type Ref } from 'vue';
 import { useQueryClient } from '@tanstack/vue-query';
+import axios from 'axios';
 import { api, type CreateTimeEntryBody, type TimeEntry } from '@/packages/api/src';
 import { formatHumanReadableDuration, getDayJsInstance } from '@/packages/ui/src/utils/time';
 import { getUserTimezone } from '@/packages/ui/src/utils/settings';
@@ -144,10 +145,21 @@ export function useTimesheetCellMutations(
                 );
                 return;
             }
+
+            let errorMessage = 'Please try again later.';
+            if (axios.isAxiosError(err)) {
+                errorMessage =
+                    err.response?.data?.errorMessage ??
+                    err.response?.data?.message ??
+                    err.message;
+            } else if (err instanceof Error) {
+                errorMessage = err.message;
+            }
+
             notifications.addNotification(
                 'error',
                 'Failed to update timesheet',
-                'Please try again later.'
+                errorMessage
             );
         } finally {
             queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
@@ -193,7 +205,7 @@ export function useTimesheetCellMutations(
     async function deleteCell(cell: TimesheetCell): Promise<void> {
         const orgId = requireOrgId();
         await api.deleteTimeEntries(undefined, {
-            queries: { ids: cell.entries.map((e) => e.id) },
+            queries: { 'ids[]': cell.entries.map((e) => e.id) },
             params: { organization: orgId },
         });
     }

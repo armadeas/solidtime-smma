@@ -4,7 +4,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { FolderIcon, PlusIcon } from '@heroicons/vue/20/solid';
 import SecondaryButton from '@/packages/ui/src/Buttons/SecondaryButton.vue';
 import ProjectTable from '@/Components/Common/Project/ProjectTable.vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useProjectsQuery } from '@/utils/useProjectsQuery';
 import { useProjectsStore } from '@/utils/useProjects';
 import ProjectCreateModal from '@/packages/ui/src/Project/ProjectCreateModal.vue';
@@ -25,10 +25,9 @@ import ProjectClientFilterBadge from '@/Components/Common/Project/ProjectClientF
 import { NO_CLIENT_ID } from '@/Components/Common/Project/constants';
 import type { SortColumn, SortDirection } from '@/Components/Common/Project/ProjectTable.vue';
 
-// Fetch data using TanStack Query
-const { projects } = useProjectsQuery();
-const { clients } = useClientsQuery();
-const { organization } = useOrganizationQuery(getCurrentOrganizationId()!);
+const searchQuery = ref('');
+const activeSearchQuery = ref('');
+const selectedMembers = ref<string[]>([]);
 
 // Table state persisted in localStorage
 interface ProjectTableState {
@@ -62,12 +61,21 @@ const tableState = useStorage<ProjectTableState>(
     }
 );
 
+// Fetch data using TanStack Query, passing the server-side filters
+const { projects } = useProjectsQuery(computed(() => ({
+    search: activeSearchQuery.value,
+    clients: tableState.value.filters.clientIds,
+    members: selectedMembers.value,
+})));
+const { clients } = useClientsQuery();
+const { organization } = useOrganizationQuery(getCurrentOrganizationId()!);
+
 function handleSort(column: SortColumn, direction: SortDirection) {
     tableState.value.sortColumn = column;
     tableState.value.sortDirection = direction;
 }
 
-// Filter projects based on current filters
+// Filter projects based on current client-side filters (status & visibility)
 const filteredProjects = computed(() => {
     return projects.value.filter((project) => {
         // Status filter
@@ -84,19 +92,6 @@ const filteredProjects = computed(() => {
         }
         if (tableState.value.filters.visibility === 'private' && project.is_public) {
             return false;
-        }
-
-        // Client filter
-        const hasClientFilter = tableState.value.filters.clientIds.length > 0;
-        if (hasClientFilter) {
-            const matchesNoClient =
-                tableState.value.filters.clientIds.includes(NO_CLIENT_ID) && !project.client_id;
-            const matchesClientId =
-                project.client_id && tableState.value.filters.clientIds.includes(project.client_id);
-
-            if (!matchesNoClient && !matchesClientId) {
-                return false;
-            }
         }
 
         return true;
@@ -131,6 +126,10 @@ const showBillableRate = computed(() => {
         getCurrentRole() !== 'employee' || organization.value?.employees_can_see_billable_rates
     );
 });
+
+function handleSearch() {
+    activeSearchQuery.value = searchQuery.value;
+}
 </script>
 
 <template>
@@ -197,6 +196,10 @@ const showBillableRate = computed(() => {
             :projects="filteredProjects"
             :sort-column="tableState.sortColumn"
             :sort-direction="tableState.sortDirection"
-            @sort="handleSort"></ProjectTable>
+            v-model:search-query="searchQuery"
+            v-model:selected-clients="tableState.filters.clientIds"
+            v-model:selected-members="selectedMembers"
+            @sort="handleSort"
+            @search="handleSearch"></ProjectTable>
     </AppLayout>
 </template>

@@ -89,10 +89,12 @@ class UserFactory extends Factory
 
     public function withProfilePicture(): static
     {
-        $profilePhoto = $this->faker->image(null, 500, 500);
         /** @see \Illuminate\Http\FileHelpers::hashName */
         $path = 'profile-photos/'.Str::random(40).'.png';
-        Storage::disk(config('jetstream.profile_photo_disk', 'public'))->put($path, $profilePhoto);
+        Storage::disk(config('jetstream.profile_photo_disk', 'public'))->put(
+            $path,
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')
+        );
 
         return $this->state(function (array $attributes) use ($path): array {
             return [

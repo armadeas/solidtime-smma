@@ -42,6 +42,7 @@ const props = defineProps<{
     start?: string;
     end?: string;
     currency: string;
+    organizationBillableRate: number | null;
     canCreateProject: boolean;
 }>();
 
@@ -179,10 +180,11 @@ type BillableOption = {
                             :create-client
                             :can-create-project
                             :currency
-                            size="xlarge"
+                            size="default"
                             class="bg-input-background"
                             :projects="projects"
                             :tasks="tasks"
+                            :organization-billable-rate="organizationBillableRate"
                             :enable-estimated-time="enableEstimatedTime"></TimeTrackerProjectTaskDropdown>
                         <div class="text-sm flex space-x-1 mt-2">
                             <span class="text-text-secondary text-xs">

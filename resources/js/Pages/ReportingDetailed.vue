@@ -38,15 +38,19 @@ import MemberMultiselectDropdown from '@/Components/Common/Member/MemberMultisel
 import TaskMultiselectDropdown from '@/Components/Common/Task/TaskMultiselectDropdown.vue';
 import SelectDropdown from '@/packages/ui/src/Input/SelectDropdown.vue';
 import ClientMultiselectDropdown from '@/Components/Common/Client/ClientMultiselectDropdown.vue';
+import { useTagsQuery } from '@/utils/useTagsQuery';
 import { useTagsStore } from '@/utils/useTags';
 import { useSessionStorage } from '@vueuse/core';
 import TimeEntryRow from '@/packages/ui/src/TimeEntry/TimeEntryRow.vue';
 import { useCurrentTimeEntryStore } from '@/utils/useCurrentTimeEntry';
+import { useProjectsQuery } from '@/utils/useProjectsQuery';
 import { useProjectsStore } from '@/utils/useProjects';
-import { useTasksStore } from '@/utils/useTasks';
+import { useTasksQuery } from '@/utils/useTasksQuery';
+import { useClientsQuery } from '@/utils/useClientsQuery';
 import { useClientsStore } from '@/utils/useClients';
 import { getOrganizationCurrencyString } from '@/utils/money';
-import { useMembersStore } from '@/utils/useMembers';
+import { useMembersQuery } from '@/utils/useMembersQuery';
+import { useOrganizationQuery } from '@/utils/useOrganizationQuery';
 import {
     PaginationEllipsis,
     PaginationFirst,
@@ -59,7 +63,7 @@ import {
 } from 'radix-vue';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { getCurrentOrganizationId, getCurrentMembershipId } from '@/utils/useUser';
-import { useTimeEntriesStore } from '@/utils/useTimeEntries';
+import { useTimeEntriesMutations } from '@/utils/useTimeEntriesMutations';
 import ReportingTabNavbar from '@/Components/Common/Reporting/ReportingTabNavbar.vue';
 import ReportingExportButton from '@/Components/Common/Reporting/ReportingExportButton.vue';
 import type { ExportFormat } from '@/types/reporting';
@@ -100,7 +104,8 @@ const selectedRoundingValueString = computed({
     },
 });
 
-const { members } = storeToRefs(useMembersStore());
+const { members } = useMembersQuery();
+const { organization } = useOrganizationQuery(getCurrentOrganizationId()!);
 const pageLimit = 15;
 
 // Watch rounding enabled state to trigger updates
@@ -139,9 +144,9 @@ const currentTimeEntryStore = useCurrentTimeEntryStore();
 const { currentTimeEntry } = storeToRefs(currentTimeEntryStore);
 const { setActiveState, startLiveTimer } = currentTimeEntryStore;
 const { handleApiRequestNotifications } = useNotificationsStore();
-const { createTimeEntry, updateTimeEntry, updateTimeEntries } = useTimeEntriesStore();
+const { createTimeEntry, updateTimeEntry, updateTimeEntries, deleteTimeEntries: deleteTimeEntriesMutation } = useTimeEntriesMutations();
 
-const { tags } = storeToRefs(useTagsStore());
+const { tags } = useTagsQuery();
 
 const { data: timeEntryResponse } = useQuery<TimeEntryResponse>({
     queryKey: ['timeEntry', 'detailed-report'],
@@ -159,10 +164,8 @@ const totalPages = computed(() => {
     return timeEntryResponse?.value?.meta?.total ?? 1;
 });
 
-const timeEntriesStore = useTimeEntriesStore();
-
 async function deleteTimeEntries(timeEntries: TimeEntry[]) {
-    await timeEntriesStore.deleteTimeEntries(timeEntries);
+    await deleteTimeEntriesMutation(timeEntries);
     selectedTimeEntries.value = [];
     await updateFilteredTimeEntries();
 }
@@ -175,12 +178,9 @@ onMounted(async () => {
     await updateFilteredTimeEntries();
 });
 
-const projectStore = useProjectsStore();
-const { projects } = storeToRefs(projectStore);
-const taskStore = useTasksStore();
-const { tasks } = storeToRefs(taskStore);
-const clientStore = useClientsStore();
-const { clients } = storeToRefs(clientStore);
+const { projects } = useProjectsQuery();
+const { tasks } = useTasksQuery();
+const { clients } = useClientsQuery();
 
 const selectedTimeEntries = ref<TimeEntry[]>([]);
 
@@ -484,13 +484,15 @@ async function downloadExport(format: ExportFormat) {
             :tags="tags"
             :currency="getOrganizationCurrencyString()"
             :clients="clients"
+            :organization-billable-rate="organization?.billable_rate ?? null"
             class="border-b border-default-background-separator"
             :update-time-entries="
-                (args) =>
-                    updateTimeEntries(
-                        selectedTimeEntries.map((timeEntry) => timeEntry.id),
-                        args
-                    )
+                async (args) => {
+                    await updateTimeEntries({
+                        ids: selectedTimeEntries.map((timeEntry) => timeEntry.id),
+                        changes: args
+                    });
+                }
             "
             :create-project="createProject"
             :create-client="createClient"
@@ -515,6 +517,7 @@ async function downloadExport(format: ExportFormat) {
                     :on-start-stop-click="() => startTimeEntryFromExisting(entry)"
                     :delete-time-entry="() => deleteTimeEntries([entry])"
                     :currency="getOrganizationCurrencyString()"
+                    :organization-billable-rate="organization?.billable_rate ?? null"
                     :duplicate-time-entry="() => createTimeEntry(entry)"
                     :members="members"
                     show-date

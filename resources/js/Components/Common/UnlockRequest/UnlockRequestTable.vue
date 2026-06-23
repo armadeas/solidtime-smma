@@ -6,9 +6,10 @@ import UnlockRequestTableHeading from '@/Components/Common/UnlockRequest/UnlockR
 import UnlockRequestCreateModal from '@/Components/Common/UnlockRequest/UnlockRequestCreateModal.vue';
 import SecondaryButton from '@/packages/ui/src/Buttons/SecondaryButton.vue';
 import { useUnlockRequestsStore } from '@/utils/useUnlockRequests';
-import { storeToRefs } from 'pinia';
+import { useProjectsQuery } from '@/utils/useProjectsQuery';
+import { useTasksQuery } from '@/utils/useTasksQuery';
+import { useClientsQuery } from '@/utils/useClientsQuery';
 import { useProjectsStore } from '@/utils/useProjects';
-import { useTasksStore } from '@/utils/useTasks';
 import { useClientsStore } from '@/utils/useClients';
 import type { CreateClientBody, CreateProjectBody, Project, Client } from '@/packages/api/src';
 import { isAllowedToPerformPremiumAction } from '@/utils/billing';
@@ -20,9 +21,9 @@ const props = defineProps<{
 
 const showCreateModal = ref(false);
 
-const { projects } = storeToRefs(useProjectsStore());
-const { tasks } = storeToRefs(useTasksStore());
-const { clients } = storeToRefs(useClientsStore());
+const { projects } = useProjectsQuery();
+const { tasks } = useTasksQuery();
+const { clients } = useClientsQuery();
 
 async function createUnlockRequest(data: any) {
     return await useUnlockRequestsStore().createUnlockRequest(data);

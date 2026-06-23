@@ -2,39 +2,123 @@
 import SecondaryButton from '@/packages/ui/src/Buttons/SecondaryButton.vue';
 import { UserCircleIcon } from '@heroicons/vue/24/solid';
 import { PlusIcon } from '@heroicons/vue/16/solid';
-import { type Component, ref, computed } from 'vue';
+import { type Component, computed, ref } from 'vue';
 import { type Client } from '@/packages/api/src';
 import ClientTableRow from '@/Components/Common/Client/ClientTableRow.vue';
 import ClientCreateModal from '@/Components/Common/Client/ClientCreateModal.vue';
 import ClientTableHeading from '@/Components/Common/Client/ClientTableHeading.vue';
 import { canCreateClients } from '@/utils/permissions';
+import { useProjectsQuery } from '@/utils/useProjectsQuery';
 import MainContainer from '@/packages/ui/src/MainContainer.vue';
-import TextInput from '../../../packages/ui/src/Input/TextInput.vue';
-import { useClientsStore } from '@/utils/useClients';
+import TextInput from '@/packages/ui/src/Input/TextInput.vue';
+import {
+    useVueTable,
+    getCoreRowModel,
+    getSortedRowModel,
+    type SortingState,
+} from '@tanstack/vue-table';
+
+export type SortColumn = 'name' | 'projects_count' | 'status';
+export type SortDirection = 'asc' | 'desc';
 
 const props = defineProps<{
     clients: Client[];
+    sortColumn: SortColumn;
+    sortDirection: SortDirection;
 }>();
-const createClient = ref(false);
 
+const emit = defineEmits<{
+    sort: [column: SortColumn, direction: SortDirection];
+}>();
+
+const createClient = ref(false);
 const searchQuery = ref('');
 
-const clientsStore = useClientsStore();
+const { projects } = useProjectsQuery();
 
-const sortOrder = ref<'asc' | 'desc'>('asc');
-
-const sortedClients = computed(() => {
-    return clientsStore.clients;
+const projectCountMap = computed(() => {
+    const map = new Map<string, number>();
+    projects.value.forEach((project) => {
+        if (project.client_id) {
+            map.set(project.client_id, (map.get(project.client_id) ?? 0) + 1);
+        }
+    });
+    return map;
 });
 
-function handleSort(order: 'asc' | 'desc') {
-    sortOrder.value = order;
-    clientsStore.fetchClients(searchQuery.value, order);
+const sorting = computed<SortingState>(() => [
+    {
+        id: props.sortColumn,
+        desc: props.sortDirection === 'desc',
+    },
+]);
+
+const columns = computed(() => [
+    {
+        id: 'name',
+        accessorFn: (row: Client) => row.name.toLowerCase(),
+    },
+    {
+        id: 'projects_count',
+        sortDescFirst: true,
+        accessorFn: (row: Client) => projectCountMap.value.get(row.id) ?? 0,
+    },
+    {
+        id: 'status',
+        accessorFn: (row: Client) => (row.is_archived ? 1 : 0),
+    },
+]);
+
+const descFirstColumns = new Set<SortColumn>(
+    columns.value
+        .filter((c) => 'sortDescFirst' in c && c.sortDescFirst)
+        .map((c) => c.id as SortColumn)
+);
+
+function handleSort(column: SortColumn) {
+    if (props.sortColumn === column) {
+        emit('sort', column, props.sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+        emit('sort', column, descFirstColumns.has(column) ? 'desc' : 'asc');
+    }
 }
 
-function handleSearch() {
-    clientsStore.fetchClients(searchQuery.value, sortOrder.value);
-}
+// Client-side filtering by searchQuery matching client name, email, phone, address
+const filteredClients = computed(() => {
+    if (!searchQuery.value) {
+        return props.clients;
+    }
+    const q = searchQuery.value.toLowerCase().trim();
+    return props.clients.filter((client) => {
+        return (
+            client.name.toLowerCase().includes(q) ||
+            client.email?.toLowerCase().includes(q) ||
+            client.phone?.toLowerCase().includes(q) ||
+            client.address?.toLowerCase().includes(q)
+        );
+    });
+});
+
+const table = useVueTable({
+    get data() {
+        return filteredClients.value;
+    },
+    get columns() {
+        return columns.value;
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+        get sorting() {
+            return sorting.value;
+        },
+    },
+    manualSorting: false,
+});
+
+const sortedClients = computed(() => {
+    return table.getRowModel().rows.map((row) => row.original);
+});
 </script>
 
 <template>
@@ -48,12 +132,10 @@ function handleSearch() {
                 <TextInput
                     v-model="searchQuery"
                     type="text"
-                    placeholder="Search client name address or anything else"
-                    class="m-1 "
+                    placeholder="Search client name, email, phone, address"
+                    class="m-1"
                     style="min-width: 180px;"
-                    @keyup.enter="handleSearch"
                 />
-                <SecondaryButton @click="handleSearch">Search</SecondaryButton>
             </div>
         </MainContainer>
     </div>
@@ -63,12 +145,13 @@ function handleSearch() {
                 data-testid="client_table"
                 class="grid min-w-full"
                 style="grid-template-columns: 1fr 150px 200px 80px">
-                <ClientTableHeading :sortOrder="sortOrder" @sort="handleSort" />
-                <div
-                    v-if="clients.length === 0"
-                    class="col-span-4 py-24 text-center">
-                    <UserCircleIcon
-                        class="w-8 text-icon-default inline pb-2"></UserCircleIcon>
+                <ClientTableHeading
+                    :sort-column="props.sortColumn"
+                    :sort-direction="props.sortDirection"
+                    :desc-first-columns="descFirstColumns"
+                    @sort="handleSort"></ClientTableHeading>
+                <div v-if="sortedClients.length === 0" class="col-span-3 py-24 text-center">
+                    <UserCircleIcon class="w-8 text-icon-default inline pb-2"></UserCircleIcon>
                     <h3 class="text-text-primary font-semibold">No clients found</h3>
                     <p v-if="canCreateClients()" class="pb-5">Create your first client now!</p>
                     <SecondaryButton

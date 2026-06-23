@@ -185,9 +185,9 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->postJson(route('api.v1.clients.store', [$data->organization->getKey()]), [
+        $response = $this->postJson(route('api.v1.clients.store', [$data->organization->getKey()]), $this->getClientRequestData([
             'name' => 'Test Client',
-        ]);
+        ]));
 
         // Assert
         $response->assertForbidden();
@@ -203,9 +203,9 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->postJson(route('api.v1.clients.store', [$data->organization->getKey()]), [
+        $response = $this->postJson(route('api.v1.clients.store', [$data->organization->getKey()]), $this->getClientRequestData([
             'name' => $client->name,
-        ]);
+        ]));
 
         // Assert
         $response->assertStatus(422);
@@ -226,9 +226,9 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->postJson(route('api.v1.clients.store', [$data->organization->getKey()]), [
+        $response = $this->postJson(route('api.v1.clients.store', [$data->organization->getKey()]), $this->getClientRequestData([
             'name' => $client->name,
-        ]);
+        ]));
 
         // Assert
         $response->assertStatus(201);
@@ -245,9 +245,9 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->postJson(route('api.v1.clients.store', [$data->organization->getKey()]), [
+        $response = $this->postJson(route('api.v1.clients.store', [$data->organization->getKey()]), $this->getClientRequestData([
             'name' => $clientFake->name,
-        ]);
+        ]));
 
         // Assert
         $response->assertStatus(201);
@@ -266,9 +266,9 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), [
+        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), $this->getClientRequestData([
             'name' => $clientFake->name,
-        ]);
+        ]));
 
         // Assert
         $response->assertForbidden();
@@ -286,9 +286,9 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), [
+        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), $this->getClientRequestData([
             'name' => $clientFake->name,
-        ]);
+        ]));
 
         // Assert
         $response->assertForbidden();
@@ -310,9 +310,9 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), [
+        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), $this->getClientRequestData([
             'name' => $clientFake->name,
-        ]);
+        ]));
 
         // Assert
         $response->assertStatus(422);
@@ -338,9 +338,9 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), [
+        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), $this->getClientRequestData([
             'name' => $clientSameName->name,
-        ]);
+        ]));
 
         // Assert
         $response->assertStatus(200);
@@ -362,9 +362,9 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), [
+        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), $this->getClientRequestData([
             'name' => $clientFake->name,
-        ]);
+        ]));
 
         // Assert
         $response->assertStatus(200);
@@ -389,10 +389,10 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), [
+        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), $this->getClientRequestData([
             'name' => $clientFake->name,
             'is_archived' => true,
-        ]);
+        ]));
 
         // Assert
         $response->assertStatus(200);
@@ -415,10 +415,10 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         Passport::actingAs($data->user);
 
         // Act
-        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), [
+        $response = $this->putJson(route('api.v1.clients.update', [$data->organization->getKey(), $client->getKey()]), $this->getClientRequestData([
             'name' => $clientFake->name,
             'is_archived' => false,
-        ]);
+        ]));
 
         // Assert
         $response->assertStatus(200);
@@ -505,5 +505,19 @@ class ClientEndpointTest extends ApiEndpointTestAbstract
         $this->assertDatabaseMissing(Client::class, [
             'id' => $client->getKey(),
         ]);
+    }
+
+    private function getClientRequestData(array $overrides = []): array
+    {
+        return array_merge([
+            'name' => 'Test Client',
+            'email' => 'client@example.com',
+            'phone' => '123456789',
+            'taxNumber' => 'TX123456',
+            'address' => '123 Main St',
+            'postal_code' => '12345',
+            'city' => 'Cityville',
+            'country' => 'Countryland',
+        ], $overrides);
     }
 }

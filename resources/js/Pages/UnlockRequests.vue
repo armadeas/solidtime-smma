@@ -5,16 +5,18 @@ import { LockOpenIcon, PlusIcon } from '@heroicons/vue/16/solid';
 import SecondaryButton from '@/packages/ui/src/Buttons/SecondaryButton.vue';
 import { computed, onMounted, ref } from 'vue';
 import PageTitle from '@/Components/Common/PageTitle.vue';
-import TabBarItem from '@/Components/Common/TabBar/TabBarItem.vue';
-import TabBar from '@/Components/Common/TabBar/TabBar.vue';
+import TabBarItem from '@/packages/ui/src/TabBar/TabBarItem.vue';
+import TabBar from '@/packages/ui/src/TabBar/TabBar.vue';
 import UnlockRequestTable from '@/Components/Common/UnlockRequest/UnlockRequestTable.vue';
 import UnlockRequestCreateModal from '@/Components/Common/UnlockRequest/UnlockRequestCreateModal.vue';
 import { useUnlockRequestsStore } from '@/utils/useUnlockRequests';
 import { storeToRefs } from 'pinia';
 import { getCurrentRole } from '@/utils/useUser';
 import type { CreateUnlockRequestBody, UnlockRequest, CreateClientBody, CreateProjectBody, Project, Client } from '@/packages/api/src';
+import { useProjectsQuery } from '@/utils/useProjectsQuery';
 import { useProjectsStore } from '@/utils/useProjects';
-import { useTasksStore } from '@/utils/useTasks';
+import { useTasksQuery } from '@/utils/useTasksQuery';
+import { useClientsQuery } from '@/utils/useClientsQuery';
 import { useClientsStore } from '@/utils/useClients';
 import { isAllowedToPerformPremiumAction } from '@/utils/billing';
 
@@ -26,9 +28,9 @@ const showCreateModal = ref(false);
 const activeTab = ref<'all' | 'my_requests' | 'pending_approvals'>('all');
 
 const { unlockRequests } = storeToRefs(useUnlockRequestsStore());
-const { projects } = storeToRefs(useProjectsStore());
-const { tasks } = storeToRefs(useTasksStore());
-const { clients } = storeToRefs(useClientsStore());
+const { projects } = useProjectsQuery();
+const { tasks } = useTasksQuery();
+const { clients } = useClientsQuery();
 
 const isManager = computed(() => {
     const role = getCurrentRole();

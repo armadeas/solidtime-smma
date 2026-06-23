@@ -18,13 +18,15 @@ import {
     UserGroupIcon,
     XMarkIcon,
     DocumentTextIcon,
+    TableCellsIcon,
 } from '@heroicons/vue/20/solid';
 import NavigationSidebarItem from '@/Components/NavigationSidebarItem.vue';
 import UserSettingsIcon from '@/Components/UserSettingsIcon.vue';
 import MainContainer from '@/packages/ui/src/MainContainer.vue';
 import { computed, onMounted, provide, ref } from 'vue';
 import NotificationContainer from '@/Components/NotificationContainer.vue';
-import { initializeStores, refreshStores } from '@/utils/init';
+import { initializeStores } from '@/utils/init';
+import { useCurrentTimeEntryStore } from '@/utils/useCurrentTimeEntry';
 import {
     canManageBilling,
     canUpdateOrganization,
@@ -92,7 +94,7 @@ onMounted(async () => {
         setTimeout(() => {
             // prevent store refreshing on navigation
             if (isUnloading.value === false) {
-                refreshStores();
+                useCurrentTimeEntryStore().fetchCurrentTimeEntry();
             }
         }, 100);
     };
@@ -138,6 +140,11 @@ const page = usePage<{
                                 :icon="ClockIcon"
                                 :current="route().current('time')"
                                 :href="route('time')"></NavigationSidebarItem>
+                            <NavigationSidebarItem
+                                title="Timesheet"
+                                :icon="TableCellsIcon"
+                                :current="route().current('timesheet')"
+                                :href="route('timesheet')"></NavigationSidebarItem>
                             <NavigationSidebarItem
                                 title="Calendar"
                                 :icon="CalendarIcon"

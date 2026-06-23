@@ -127,6 +127,15 @@ function commitAndSubmit() {
     commitValue();
     emit('submit');
 }
+
+function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        commitAndSubmit();
+    } else if (event.key === 'Escape') {
+        cancelEdit(event);
+    }
+}
 </script>
 
 <template>
@@ -140,6 +149,5 @@ function commitAndSubmit() {
         :class="inputClass"
         @focus="selectInput"
         @blur="commitValue"
-        @keydown.enter.prevent="commitAndSubmit"
-        @keydown.escape="cancelEdit" />
+        @keydown="handleKeyDown" />
 </template>

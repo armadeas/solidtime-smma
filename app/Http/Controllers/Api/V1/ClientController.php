@@ -45,6 +45,8 @@ class ClientController extends Controller
             ->whereBelongsTo($organization, 'organization')
             ->when($request->order, function ($query, $order) {
                 $query->orderBy('name', $order);
+            }, function ($query) {
+                $query->orderBy('created_at', 'desc');
             })
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($subQuery) use ($search) {

@@ -39,7 +39,8 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
-        <env name="AUDITING_ENABLED" value="true"/>
+        <env name="AUDITING_ENABLED" value="false" force="true"/>
+        <env name="APP_ENABLE_REGISTRATION" value="true" force="true"/>
         <env name="NEWSLETTER_URL" value="null"/>
         <env name="PASSPORT_PERSONAL_ACCESS_CLIENT_ID" value="null"/>
         <env name="PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET" value="null"/>

@@ -3,16 +3,17 @@ import DialogModal from '@/packages/ui/src/DialogModal.vue';
 import SecondaryButton from '@/packages/ui/src/Buttons/SecondaryButton.vue';
 import PrimaryButton from '@/packages/ui/src/Buttons/PrimaryButton.vue';
 import TimeTrackerProjectTaskDropdown from '@/packages/ui/src/TimeTracker/TimeTrackerProjectTaskDropdown.vue';
-import { computed, nextTick, ref, watch } from 'vue';
-import type { CreateUnlockRequestBody, UnlockRequest, CreateClientBody, CreateProjectBody, Project, Client, Task } from '@/packages/api/src';
+import { computed, inject, nextTick, ref, watch, type ComputedRef } from 'vue';
+import type { CreateUnlockRequestBody, UnlockRequest, CreateClientBody, CreateProjectBody, Project, Client, Task, Organization } from '@/packages/api/src';
 import { getOrganizationCurrencyString } from '@/utils/money';
 import { canCreateProjects } from '@/utils/permissions';
-import { storeToRefs } from 'pinia';
-import { useProjectsStore } from '@/utils/useProjects';
+import { useProjectsQuery } from '@/utils/useProjectsQuery';
 
 const show = defineModel('show', { default: false });
 const saving = ref(false);
 const reasonError = ref('');
+
+const organization = inject<ComputedRef<Organization>>('organization');
 
 const unlockRequest = ref<CreateUnlockRequestBody>({
     project_id: '',
@@ -28,7 +29,7 @@ const props = defineProps<{
     enableEstimatedTime: boolean;
 }>();
 
-const { projects } = storeToRefs(useProjectsStore());
+const { projects } = useProjectsQuery();
 
 const taskId = ref<string | null>(null);
 
@@ -121,7 +122,8 @@ const isSubmitDisabled = computed(() => {
                         :create-client="createClient"
                         :can-create-project="canCreateProjects()"
                         :currency="getOrganizationCurrencyString()"
-                        size="xlarge"
+                        size="default"
+                        :organization-billable-rate="organization?.billable_rate ?? null"
                         class="bg-input-background"
                         :projects="projects"
                         :tasks="tasks"

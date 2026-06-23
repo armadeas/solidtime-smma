@@ -24,6 +24,13 @@ class ClientFactory extends Factory
             'name' => $this->faker->company(),
             'archived_at' => null,
             'organization_id' => Organization::factory(),
+            'email' => $this->faker->safeEmail(),
+            'phone' => $this->faker->phoneNumber(),
+            'taxNumber' => $this->faker->numerify('TX#####'),
+            'address' => $this->faker->streetAddress(),
+            'postal_code' => $this->faker->postcode(),
+            'city' => $this->faker->city(),
+            'country' => $this->faker->country(),
         ];
     }
 

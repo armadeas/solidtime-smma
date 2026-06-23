@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ref } from 'vue';
+import axios from 'axios';
 import { createPinia, setActivePinia } from 'pinia';
 import { useTimesheetCellMutations, makeCellStatusKey } from './useTimesheetCellMutations';
 import { api } from '@/packages/api/src';
@@ -180,7 +181,7 @@ describe('useTimesheetCellMutations.handleCellUpdate', () => {
 
         expect(apiMocks.deleteTimeEntries).toHaveBeenCalledTimes(1);
         const [, options] = apiMocks.deleteTimeEntries.mock.calls[0]!;
-        expect(options?.queries?.ids).toEqual([cellEntry.id]);
+        expect(options?.queries?.['ids[]']).toEqual([cellEntry.id]);
         expect(options?.params?.organization).toBe('org-1');
     });
 
@@ -617,6 +618,34 @@ describe('useTimesheetCellMutations save status', () => {
             'error',
             'Failed to update timesheet',
             expect.any(String)
+        );
+    });
+
+    it('marks error and extracts server-side error messages for Axios failures', async () => {
+        const { cellMutations } = setup([]);
+        const row = buildEmptyRow('p-1');
+        const key = makeCellStatusKey(row.key, 0);
+
+        const axiosError = new Error('Request failed');
+        (axiosError as any).isAxiosError = true;
+        (axiosError as any).response = {
+            status: 403,
+            data: {
+                message: 'This time entry is locked. You need to request unlock permission.',
+            },
+        };
+
+        vi.spyOn(axios, 'isAxiosError').mockReturnValueOnce(true);
+        apiMocks.createTimeEntry.mockRejectedValueOnce(axiosError);
+
+        await cellMutations.handleCellUpdate(row, 0, HOUR);
+
+        expect(cellMutations.cellStatus.value[key]).toBe('error');
+        expect(cellMutations.cellPendingSeconds.value[key]).toBeUndefined();
+        expect(addNotification).toHaveBeenCalledWith(
+            'error',
+            'Failed to update timesheet',
+            'This time entry is locked. You need to request unlock permission.'
         );
     });
 
